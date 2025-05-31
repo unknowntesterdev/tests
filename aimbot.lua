@@ -63,10 +63,6 @@ local Weapons = {
    "Crude Knife";
 }
 
--- [ Metatable ] --
-local RawMetatable = getrawmetatable(game)
-local __NameCall = RawMetatable.__namecall
-local __Index = RawMetatable.__index
 
 
 -- // Functions \\ --
@@ -183,7 +179,9 @@ local function Crash(Gun, BulletCount, ShotCount)
    end
 end
 
-local Window = OrionLib:MakeWindow({Name = "Title of the library", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+-- // User Interface \\ --
+-- [ Window ] --
+local Window = OrionLib:MakeWindow({Name = "Privia X", HidePremium = false, SaveConfig = true, ConfigFolder = "X"})
 
 --[[
 Name = <string> - The name of the UI.
@@ -196,10 +194,9 @@ IntroIcon = <string> - URL to the image you want to use in the intro animation.
 Icon = <string> - URL to the image you want displayed on the window.
 CloseCallback = <function> - Function to execute when the window is closed.
 ]]
-
 -- [ Assists ] --
 local Tab = Window:MakeTab({
-	Name = "Tab 1",
+	Name = "Silent Aim",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
@@ -210,19 +207,9 @@ Icon = <string> - The icon of the tab.
 PremiumOnly = <bool> - Makes the tab accessible to Sirus Premium users only.
 ]]
 
---[[
-Name = <string> - The name of the tab.
-Icon = <string> - The icon of the tab.
-PremiumOnly = <bool> - Makes the tab accessible to Sirus Premium users only.
-]]
-
 local Section = Tab:AddSection({
-	Name = "Section"
+	Name = "X"
 })
-
---[[
-Name = <string> - The name of the section.
-]]
 
 --[[
 Name = <string> - The name of the section.
@@ -234,6 +221,26 @@ Tab:AddToggle({
 		Info.SilentAIMEnabled = State
 	end    
 })
+
+OrionLib:MakeNotification({
+	Name = "Privia X",
+	Content = "fxcked by @hazarzzy",
+	Image = "rbxassetid://4483345998",
+	Time = 10
+})
+
+--[[
+Title = <string> - The title of the notification.
+Content = <string> - The content of the notification.
+Image = <string> - The icon of the notification.
+Time = <number> - The duration of the notfication.
+]]
+
+--[[
+Name = <string> - The name of the toggle.
+Default = <bool> - The default value of the toggle.
+Callback = <function> - The function of the toggle.
+]]
 
 
 Tab:AddSlider({
@@ -248,6 +255,549 @@ Tab:AddSlider({
 		Info.FieldOfView = 500
 	end    
 })
+
+--[[
+Name = <string> - The name of the slider.
+Min = <number> - The minimal value of the slider.
+Max = <number> - The maxium value of the slider.
+Increment = <number> - How much the slider will change value when dragging.
+Default = <number> - The default value of the slider.
+ValueName = <string> - The text after the value number.
+Callback = <function> - The function of the slider.
+]]
+local Tab = Window:MakeTab({
+	Name = "Scripts",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+--[[
+Name = <string> - The name of the tab.
+Icon = <string> - The icon of the tab.
+PremiumOnly = <bool> - Makes the tab accessible to Sirus Premium users only.
+]]
+
+local Section = Tab:AddSection({
+	Name = "X"
+})
+
+Tab:AddButton({
+	Name = "Sprint",
+	Callback = function()
+      		-- ScreenGui oluştur
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer.PlayerGui
+
+-- Hızı Ayarla butonu
+local speedButton = Instance.new("TextButton")
+speedButton.Parent = screenGui
+speedButton.Position = UDim2.new(0, 20, 0, 20) -- Sol üst köşeye taşı
+speedButton.Size = UDim2.new(0, 100, 0, 30) -- Boyutu küçült
+speedButton.Text = "Sprint"
+speedButton.Draggable = true -- Hareket ettirilebilir yap
+speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Arka plan rengini siyah yap
+speedButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Yazı rengini beyaz yap
+
+-- Hızı Ayarla butonuna tıklandığında yapılacak işlem
+speedButton.MouseButton1Click:Connect(function()
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 24
+        end
+    end
+end)
+
+-- Saklama Düğmesi
+local hideButton = Instance.new("TextButton")
+hideButton.Parent = screenGui
+hideButton.Position = UDim2.new(0, 10, 0, 10) -- Sol üst köşeye taşı
+hideButton.Size = UDim2.new(0, 30, 0, 30) -- Boyutu küçült
+hideButton.Text = "X" -- Kapatma işareti
+hideButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Arka plan rengini siyah yap
+hideButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Yazı rengini beyaz yap
+
+-- Saklama Düğmesine tıklandığında yapılacak işlem
+local hidden = false
+hideButton.MouseButton1Click:Connect(function()
+    if hidden then
+        speedButton.Visible = true -- Düğmeyi görünür yap
+        hideButton.Text = "X" -- Kapatma işaretini geri getir
+    else
+        speedButton.Visible = false -- Düğmeyi gizle
+        hideButton.Text = "+" -- Açma işareti göster
+    end
+    hidden = not hidden
+end)
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Shiftlock",
+	Callback = function()
+      		loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/hazarprivia/privia/main/Shiftlock.txt"))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Infınıty stamina",
+	Callback = function()
+      		loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ImMejor35/Prison-Life/main/Infinite%20Stamina.lua"))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Remove doors",
+	Callback = function()
+      		game.Workspace.Doors:Destroy()
+game.Workspace.Prison_Fences:Destroy()
+  	end    
+})
+
+
+
+
+
+Tab:AddButton({
+	Name = "Loop kill all",
+	Callback = function()
+      		spawn(function()
+while wait(0.1) do
+for i, v in next, game:GetService("Players"):GetChildren() do
+pcall(function()
+if v~= game:GetService("Players").LocalPlayer and not v.Character:FindFirstChildOfClass("ForceField") and v.Character.Humanoid.Health > 0 then
+while v.Character:WaitForChild("Humanoid").Health > 0 do
+wait();
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame;
+for x, c in next, game:GetService("Players"):GetChildren() do
+if c ~= game:GetService("Players").LocalPlayer then game.ReplicatedStorage.meleeEvent:FireServer(c) end
+end
+end
+end
+end)
+wait()
+end
+end
+end)
+  	end    
+})
+
+
+Tab:AddButton({
+	Name = "Arrest criminals",
+	Callback = function()
+      		for i, v in pairs(game.Teams.Criminals:GetPlayers()) do
+		if v.Name ~= game.Players.LocalPlayer.Name then
+			local inp = 10
+			repeat
+				wait()
+				inp = inp-1
+				game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1)
+                		game.Workspace.Remote.arrest:InvokeServer(v.Character.HumanoidRootPart)
+			until inp == 0
+		end
+	end
+  	end    
+})
+
+
+local Tab = Window:MakeTab({
+	Name = "Teleports",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+--[[
+Name = <string> - The name of the tab.
+Icon = <string> - The icon of the tab.
+PremiumOnly = <bool> - Makes the tab accessible to Sirus Premium users only.
+]]
+
+local Section = Tab:AddSection({
+	Name = "X"
+})
+
+
+Tab:AddButton({
+	Name = "Cells",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(915, 100, 2450)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Grocery Shop",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-415, 55, 1750)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+Tab:AddButton({
+	Name = "Car Spawn",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-200, 55, 1880)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+Tab:AddButton({
+	Name = "Outside Prison",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(280, 72, 2222)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+Tab:AddButton({
+	Name = "Prison Yard",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(777, 95, 2460)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Shops",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-370, 55, 1775)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Secret Area",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-920, 95, 1990)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Gas Station",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-520, 55, 1660)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Criminal Base",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-910, 95, 2060)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "House Area",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(-230, 55, 2520)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Prison Walkway",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(505, 125, 2330)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Police Cars",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(615, 100, 2515)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Entrance",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(710, 100, 2300)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Police Area",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(855, 100, 2297)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+Tab:AddButton({
+	Name = "Cafeteria",
+	Callback = function()
+	
+		-- buraya gelecek script
+		
+		local Players = game:GetService('Players')
+		local localPlayer = Players.LocalPlayer
+		local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart')
+		
+		if humanoid then
+			humanoid.CFrame = CFrame.new(930, 100, 2285)
+			print("Teleported")
+		else
+			game:GetService('StarterGui'):SetCore('SendNotification',{
+				Title = "Error",
+				Text = "HumanoidRootPart not found!",
+				Duration = 5,
+			})
+		end
+	
+	end    
+})
+
+
+--[[
+Name = <string> - The name of the textbox.
+Default = <string> - The default value of the textbox.
+TextDisappear = <bool> - Makes the text disappear in the textbox after losing focus.
+Callback = <function> - The function of the textbox.
+]]
+
 
 -- // Metatable \\ --
 setreadonly(RawMetatable, false)
