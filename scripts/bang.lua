@@ -126,7 +126,8 @@ end
 local TweenService = game:GetService("TweenService")
 
 local BangActive = false
-local bangTweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+local bangTweenDuration = 0.4  -- hız artırıldı
+local bangTweenInfo = TweenInfo.new(bangTweenDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 
 local function StartBang(target)
     if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
@@ -135,29 +136,34 @@ local function StartBang(target)
     end
 
     local root = GetRoot(plr)
-    local targetRoot = GetRoot(target)
-    if not root or not targetRoot then
-        warn("Root part bulunamadı.")
+    if not root then
+        warn("Kendi root bulunamadı.")
         return
     end
-
-    local forwardVector = targetRoot.CFrame.LookVector
-    local basePosition = targetRoot.Position - forwardVector * 1.5 -- hedefin arkasında 1.5 stud
 
     BangActive = true
 
     spawn(function()
-        while BangActive and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") do
+        while BangActive and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and target.Character and target.Character:FindFirstChild("HumanoidRootPart") do
             local root = GetRoot(plr)
-            if not root then break end
+            local targetRoot = GetRoot(target)
+            if not root or not targetRoot then break end
 
+            -- Hedefin anlık yönü (LookVector)
+            local forwardVector = targetRoot.CFrame.LookVector
+            -- Hedefin arkasındaki temel pozisyon (1.5 stud geride)
+            local basePosition = targetRoot.Position - forwardVector * 1.5
+
+            -- İleri pozisyon (1.5 stud arkasından 2 stud ileri)
             local forwardPos = basePosition + forwardVector * 2
+
+            -- Tween ileri
             local tweenForward = TweenService:Create(root, bangTweenInfo, {CFrame = CFrame.new(forwardPos, targetRoot.Position)})
             tweenForward:Play()
             tweenForward.Completed:Wait()
 
-            local backwardPos = basePosition
-            local tweenBackward = TweenService:Create(root, bangTweenInfo, {CFrame = CFrame.new(backwardPos, targetRoot.Position)})
+            -- Tween geri
+            local tweenBackward = TweenService:Create(root, bangTweenInfo, {CFrame = CFrame.new(basePosition, targetRoot.Position)})
             tweenBackward:Play()
             tweenBackward.Completed:Wait()
         end
@@ -167,6 +173,7 @@ end
 local function StopBang()
     BangActive = false
 end
+
 
 -- Target Player Textbox
 Section:AddTextbox({
