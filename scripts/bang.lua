@@ -126,6 +126,16 @@ local function PredictionTP(player,method)
     end
 end
 
+-- UI Elements --
+Section:AddTextbox({
+	Name = "Player Name",
+	Default = "",
+	TextDisappear = true,
+	Callback = function(text)
+		TargetedPlayerName = text
+	end
+})
+
 -- Drag Toggle Button
 Section:AddButton({
 	Name = "Drag",
@@ -337,6 +347,7 @@ local function StartBang(target)
 			local finalPos = basePos + rightVector * offset
 
 			root.CFrame = CFrame.new(finalPos, targetRoot.Position)
+			root.Velocity = Vector3.new(0, 0, 0)
 		end
 	end)
 end
