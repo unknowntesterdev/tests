@@ -122,22 +122,21 @@ Section:AddButton({
 	end
 })
 
--- Sit Head toggle'u eklendi
-local HeadsitActive = false
+local SitHeadActive = false
 
-Section:AddToggle({
-	Name = "Sit Head",
-	Default = false,
-	Callback = function(value)
-		HeadsitActive = value
+Section:AddButton({
+	Name = "Toggle Sit Head",
+	Callback = function()
 		local target = GetPlayer(TargetedPlayerName)
 		if not target then
 			warn("Lütfen geçerli hedef oyuncu ismi girin.")
-			Section:Toggle("Sit Head", false)
 			return
 		end
 
-		if HeadsitActive then
+		SitHeadActive = not SitHeadActive
+
+		if SitHeadActive then
+			print("Sit Head başladı")
 			spawn(function()
 				repeat
 					pcall(function()
@@ -156,9 +155,10 @@ Section:AddToggle({
 						end
 					end)
 					task.wait()
-				until HeadsitActive == false
+				until SitHeadActive == false
 			end)
 		else
+			print("Sit Head durduruldu")
 			local root = GetRoot(plr)
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
@@ -169,5 +169,6 @@ Section:AddToggle({
 		end
 	end
 })
+
 
 OrionLib:Init()
