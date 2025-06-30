@@ -11,7 +11,14 @@ Velocity_Asset.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 Velocity_Asset.Velocity = Vector3.new(0, 0, 0)
 
 local TargetedPlayerName = ""
+
 local DragActive = false
+local SitHeadActive = false
+local BackpackActive = false
+local DoggyActive = false
+local SexActive = false
+
+local SexAnimId = 148840371
 
 local function GetCharacter(Player)
 	return Player and Player.Character
@@ -57,6 +64,15 @@ local function StopAnim()
 	end
 end
 
+local function ChangeToggleColor(Button)
+	local led = Button.Ticket_Asset
+	if led.ImageColor3 == Color3.fromRGB(255, 0, 0) then
+		led.ImageColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		led.ImageColor3 = Color3.fromRGB(255, 0, 0)
+	end
+end
+
 local function GetPlayer(UserDisplay)
 	if UserDisplay ~= "" then
 		UserDisplay = UserDisplay:lower()
@@ -69,7 +85,7 @@ local function GetPlayer(UserDisplay)
 	return nil
 end
 
--- UI elemanları
+-- Target Player Textbox
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
@@ -79,6 +95,7 @@ Section:AddTextbox({
 	end
 })
 
+-- Drag Toggle Button
 Section:AddButton({
 	Name = "Toggle Drag",
 	Callback = function()
@@ -91,8 +108,9 @@ Section:AddButton({
 		DragActive = not DragActive
 
 		if DragActive then
-			print("Drag başlatıldı")
+			print("Drag başladı")
 			PlayAnim(10714360343, 0.5, 0)
+
 			spawn(function()
 				repeat
 					pcall(function()
@@ -111,6 +129,7 @@ Section:AddButton({
 					task.wait()
 				until DragActive == false
 			end)
+
 		else
 			print("Drag durduruldu")
 			StopAnim()
@@ -122,8 +141,7 @@ Section:AddButton({
 	end
 })
 
-local SitHeadActive = false
-
+-- Sit Head Toggle Button
 Section:AddButton({
 	Name = "Toggle Sit Head",
 	Callback = function()
@@ -170,8 +188,7 @@ Section:AddButton({
 	end
 })
 
--- Backpack Target Butonu
-local BackpackActive = false
+-- Backpack Target Toggle Button
 Section:AddButton({
 	Name = "Toggle Backpack Target",
 	Callback = function()
@@ -218,8 +235,7 @@ Section:AddButton({
 	end
 })
 
--- Doggy Target Butonu
-local DoggyActive = false
+-- Doggy Target Toggle Button
 Section:AddButton({
 	Name = "Toggle Doggy Target",
 	Callback = function()
@@ -264,43 +280,51 @@ Section:AddButton({
 	end
 })
 
--- Teleport Target Butonu
+-- Fucking Toggle Button
 Section:AddButton({
-	Name = "Teleport To Target",
+	Name = "Toggle Fucking",
 	Callback = function()
 		local target = GetPlayer(TargetedPlayerName)
-		if not target then
-			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+		if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
+			warn("Lütfen geçerli hedef oyuncu ismi girin ve hedef hazır olsun.")
 			return
 		end
-		TeleportTO(0, 0, 0, target, "safe")
-	end
-})
 
--- Teleport Fonksiyonu (aynı seninkisi)
-local function TeleportTO(posX,posY,posZ,player,method)
-	pcall(function()
-		if method == "safe" then
-			task.spawn(function()
-				for i = 1,30 do
-					task.wait()
-					GetRoot(plr).Velocity = Vector3.new(0,0,0)
-					if player == "pos" then
-						GetRoot(plr).CFrame = CFrame.new(posX,posY,posZ)
-					else
-						GetRoot(plr).CFrame = CFrame.new(GetRoot(player).Position) + Vector3.new(0,2,0)
+		SexActive = not SexActive
+
+		if SexActive then
+			print("Fucking başladı")
+			local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				pcall(function()
+					if plr.Character:FindFirstChild("Pants") then plr.Character.Pants:Destroy() end
+					if plr.Character:FindFirstChild("Shirt") then plr.Character.Shirt:Destroy() end
+				end)
+
+				local anim = Instance.new("Animation")
+				anim.AnimationId = "rbxassetid://"..SexAnimId
+				local animTrack = hum:LoadAnimation(anim)
+				animTrack:Play()
+				animTrack:AdjustSpeed(10)
+
+				spawn(function()
+					while SexActive and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and target.Character and target.Character:FindFirstChild("HumanoidRootPart") do
+						task.wait()
+						plr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
 					end
-				end
-			end)
+					animTrack:Stop()
+				end)
+			end
 		else
-			GetRoot(plr).Velocity = Vector3.new(0,0,0)
-			if player == "pos" then
-				GetRoot(plr).CFrame = CFrame.new(posX,posY,posZ)
-			else
-				GetRoot(plr).CFrame = CFrame.new(GetRoot(player).Position) + Vector3.new(0,2,0)
+			print("Fucking durduruldu")
+			local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				for _, track in pairs(hum:GetPlayingAnimationTracks()) do
+					track:Stop()
+				end
 			end
 		end
-	end)
-end
+	end
+})
 
 OrionLib:Init()
