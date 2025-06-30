@@ -12,7 +12,6 @@ Velocity_Asset.Velocity = Vector3.new(0, 0, 0)
 
 local TargetedPlayerName = ""
 local DragActive = false
-local HeadsitActive = false
 
 local function GetCharacter(Player)
 	return Player and Player.Character
@@ -70,7 +69,7 @@ local function GetPlayer(UserDisplay)
 	return nil
 end
 
--- Target oyuncu adı için textbox
+-- UI elemanları
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
@@ -80,7 +79,6 @@ Section:AddTextbox({
 	end
 })
 
--- Drag toggle butonu
 Section:AddButton({
 	Name = "Toggle Drag",
 	Callback = function()
@@ -124,7 +122,9 @@ Section:AddButton({
 	end
 })
 
--- Sit Head toggle
+-- Sit Head toggle'u eklendi
+local HeadsitActive = false
+
 Section:AddToggle({
 	Name = "Sit Head",
 	Default = false,
