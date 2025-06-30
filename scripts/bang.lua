@@ -4,6 +4,7 @@ local Tab = Window:MakeTab({Name = "Game", Icon = "rbxassetid://4483345998", Pre
 local Section = Tab:AddSection({Name = "Game Menu"})
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local plr = Players.LocalPlayer
 
 local Velocity_Asset = Instance.new("BodyVelocity")
@@ -16,7 +17,9 @@ local DragActive = false
 local SitHeadActive = false
 local BackpackActive = false
 local DoggyActive = false
-local SexActive = false
+local FlingActive = false
+local BangActive = false
+local BangConn
 
 local SexAnimId = 148840371
 
@@ -123,81 +126,6 @@ local function PredictionTP(player,method)
     end
 end
 
-local RunService = game:GetService("RunService")
-
-local BangActive = false
-local conn
-local speed = 20 -- hareket hızı (ne kadar büyük o kadar hızlı)
-local distance = 3 -- hedefin arkasında durma mesafesi (3 stud gibi)
-local oscillationRange = 1 -- ileri geri salınım mesafesi
-
-local function GetRoot(Player)
-	local char = Player and Player.Character
-	if char then
-		return char:FindFirstChild("HumanoidRootPart")
-	end
-	return nil
-end
-
-local function StartBang(target)
-    if conn then conn:Disconnect() end
-    local t = 0
-    local root = GetRoot(plr)
-    if not root then return end
-
-    conn = RunService.Heartbeat:Connect(function(deltaTime)
-        if not BangActive or not target or not target.Character or not GetRoot(target) then
-            StopBang()
-            return
-        end
-
-        t = t + deltaTime * speed
-
-        local targetRoot = GetRoot(target)
-        if targetRoot then
-            -- Hedefin bakış yönü
-            local lookVector = targetRoot.CFrame.LookVector
-
-            -- Tam hedefin arkasında base pozisyon (distance kadar geride)
-            local basePos = targetRoot.Position - (lookVector * distance)
-
-            -- İleri geri hareket için sin dalgası
-            local offset = math.sin(t) * oscillationRange
-
-            -- Salınım vektörü hedefin sağ yönü (Y eksenine göre sağ)
-            local rightVector = targetRoot.CFrame.RightVector
-
-            -- Final pozisyon = base + sağa sola offset
-            local finalPos = basePos + rightVector * offset
-
-            -- Kendi rotanı hedefe dön
-            root.CFrame = CFrame.new(finalPos, targetRoot.Position) -- Baktığı yön hedefe dönük
-
-            -- Yavaş yukarı kalkma efekti verilebilir (isteğe bağlı)
-            -- root.Velocity = Vector3.new(0, 5, 0)
-        end
-    end)
-end
-
-function StopBang()
-    if conn then
-        conn:Disconnect()
-        conn = nil
-    end
-end
-
-
-
--- Target Player Textbox
-Section:AddTextbox({
-	Name = "Player Name",
-	Default = "",
-	TextDisappear = true,
-	Callback = function(text)
-		TargetedPlayerName = text
-	end
-})
-
 -- Drag Toggle Button
 Section:AddButton({
 	Name = "Drag",
@@ -244,6 +172,7 @@ Section:AddButton({
 	end
 })
 
+-- Sit Head Toggle Button
 Section:AddButton({
 	Name = "Sit Head",
 	Callback = function()
@@ -290,6 +219,7 @@ Section:AddButton({
 	end
 })
 
+-- Backpack Target Toggle Button
 Section:AddButton({
 	Name = "Backpack Target",
 	Callback = function()
@@ -379,70 +309,63 @@ Section:AddButton({
 	end
 })
 
-local FlingActive = false
+-- Bang Feature (Target'in arkasında ileri geri salınma)
+local speed = 20 -- salınım hızı
+local distance = 3 -- hedefin arkasındaki mesafe
+local oscillationRange = 1 -- ileri geri salınım mesafesi
+
+local function StartBang(target)
+	if BangConn then BangConn:Disconnect() end
+	local t = 0
+	local root = GetRoot(plr)
+	if not root then return end
+
+	BangConn = RunService.Heartbeat:Connect(function(deltaTime)
+		if not BangActive or not target or not target.Character or not GetRoot(target) then
+			StopBang()
+			return
+		end
+
+		t = t + deltaTime * speed
+
+		local targetRoot = GetRoot(target)
+		if targetRoot then
+			local lookVector = targetRoot.CFrame.LookVector
+			local basePos = targetRoot.Position - (lookVector * distance)
+			local offset = math.sin(t) * oscillationRange
+			local rightVector = targetRoot.CFrame.RightVector
+			local finalPos = basePos + rightVector * offset
+
+			root.CFrame = CFrame.new(finalPos, targetRoot.Position)
+		end
+	end)
+end
+
+function StopBang()
+	if BangConn then
+		BangConn:Disconnect()
+		BangConn = nil
+	end
+end
 
 Section:AddButton({
-    Name = "Fling Target",
-    Callback = function()
-        local target = GetPlayer(TargetedPlayerName)
-        if not target then
-            warn("Lütfen geçerli hedef oyuncu ismi girin.")
-            return
-        end
+	Name = "Bang",
+	Callback = function()
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Geçerli hedef yok!")
+			return
+		end
 
-        FlingActive = not FlingActive
-
-        if FlingActive then
-            print("Fling başladı")
-
-            -- Eğer TouchFling açıksa kapat (örnek)
-            if TouchFlingActive then
-                TouchFlingActive = false
-                -- TouchFling kapatma kodu buraya
-            end
-
-            local root = GetRoot(plr)
-            local oldPos = root and root.Position
-
-            ToggleFling(true)
-
-            spawn(function()
-                repeat
-                    task.wait()
-                    pcall(function()
-                        PredictionTP(target, "safe")
-                    end)
-                until not FlingActive
-                if oldPos then
-                    TeleportTO(oldPos.X, oldPos.Y, oldPos.Z, "pos", "safe")
-                end
-                ToggleFling(false)
-            end)
-
-        else
-            print("Fling durduruldu")
-            ToggleFling(false)
-        end
-    end
+		BangActive = not BangActive
+		if BangActive then
+			print("Bang başladı")
+			StartBang(target)
+		else
+			print("Bang durdu")
+			StopBang()
+		end
+	end
 })
 
-local BangActive = false
-
-Section:AddButton({
-    Name = "Bang",
-    Callback = function()
-        local target = GetPlayer(TargetedPlayerName)
-        if not target then
-            warn("Geçerli hedef yok")
-            return
-        end
-
-        BangActive = not BangActive
-
-        if BangActive then
-            StartBang(target)
-        else
-            StopBang()
-        end
-    end
-})
+OrionLib:Init()
