@@ -15,41 +15,91 @@ local Section = Tab:AddSection({
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 
+-- Kullanıcı ismine göre oyuncu bulma
+local function FindPlayerByName(UserDisplay)
+    if UserDisplay ~= "" then
+        UserDisplay = UserDisplay:lower()
+        for _, v in pairs(Players:GetPlayers()) do
+            if v.Name:lower():match(UserDisplay) or v.DisplayName:lower():match(UserDisplay) then
+                return v
+            end
+        end
+        return nil
+    else
+        return nil
+    end
+end
+
+-- Oyuncunun karakterini güvenli alma
+local function GetCharacter(Player)
+    if Player and Player.Character then
+        return Player.Character
+    end
+    return nil
+end
+
+-- HumanoidRootPart alma
+local function GetRoot(Player)
+    local character = GetCharacter(Player)
+    if character then
+        return character:FindFirstChild("HumanoidRootPart")
+    end
+    return nil
+end
+
+-- Animasyon oynatma
+local function PlayAnim(id, time, speed)
+    pcall(function()
+        plr.Character.Animate.Disabled = false
+        local hum = plr.Character.Humanoid
+        local animtrack = hum:GetPlayingAnimationTracks()
+        for _, track in pairs(animtrack) do
+            track:Stop()
+        end
+        plr.Character.Animate.Disabled = true
+        local Anim = Instance.new("Animation")
+        Anim.AnimationId = "rbxassetid://"..id
+        local loadanim = hum:LoadAnimation(Anim)
+        loadanim:Play()
+        loadanim.TimePosition = time
+        loadanim:AdjustSpeed(speed)
+        loadanim.Stopped:Connect(function()
+            plr.Character.Animate.Disabled = false
+            for _, track in pairs(animtrack) do
+                track:Stop()
+            end
+        end)
+    end)
+end
+
+-- Animasyon durdurma
+local function StopAnim()
+    plr.Character.Animate.Disabled = false
+    local animtrack = plr.Character.Humanoid:GetPlayingAnimationTracks()
+    for _, track in pairs(animtrack) do
+        track:Stop()
+    end
+end
+
 local Velocity_Asset = Instance.new("BodyVelocity")
 Velocity_Asset.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 Velocity_Asset.Velocity = Vector3.new(0, 0, 0)
 
-local TargetedPlayerName = nil
+-- UI değişkenleri
+local TargetedPlayerName = ""
 local TargetedPlayer = nil
-local DragToggle = false
+local DragEnabled = false
 
-local function GetRoot(player)
-	if player and player.Character then
-		return player.Character:FindFirstChild("HumanoidRootPart")
-	end
-	return nil
-end
-
-local function PlayAnim(animId, speed, loop)
-	print("Anim oynatılıyor:", animId)
-	-- Animasyon kodu buraya
-end
-
-local function StopAnim()
-	print("Animasyon durduruldu")
-	-- Animasyon durdurma buraya
-end
-
--- Textbox: hedef oyuncu ismi gir
+-- Textbox: Hedef oyuncu ismi gir
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
 	TextDisappear = true,
 	Callback = function(text)
 		TargetedPlayerName = text
-		TargetedPlayer = Players:FindFirstChild(text)
+		TargetedPlayer = FindPlayerByName(text)
 		if TargetedPlayer then
-			print("Target set to:", text)
+			print("Target player set to:", text)
 		else
 			warn("Player not found:", text)
 		end
@@ -61,26 +111,24 @@ Section:AddToggle({
 	Name = "Drag Target",
 	Default = false,
 	Callback = function(value)
-		DragToggle = value
-		if DragToggle then
+		DragEnabled = value
+		if DragEnabled then
 			if not TargetedPlayer then
-				warn("Lütfen geçerli hedef oyuncu ismi girin.")
-				Section:Toggle("Drag Target", false) -- Toggle'u kapat
+				warn("Please enter a valid target player name before enabling drag!")
+				Section:Toggle("Drag Target", false)
 				return
 			end
-
 			PlayAnim(10714360343, 0.5, 0)
-
 			spawn(function()
-				while DragToggle do
+				while DragEnabled do
 					pcall(function()
 						local root = GetRoot(plr)
 						local targetRoot = GetRoot(TargetedPlayer)
 						if root and targetRoot then
 							if not root:FindFirstChild("BreakVelocity") then
-								local tempV = Velocity_Asset:Clone()
-								tempV.Name = "BreakVelocity"
-								tempV.Parent = root
+								local vel = Velocity_Asset:Clone()
+								vel.Name = "BreakVelocity"
+								vel.Parent = root
 							end
 							root.CFrame = targetRoot.CFrame * CFrame.new(0, -2.5, 1) * CFrame.Angles(math.rad(-2), math.rad(-3), 0)
 							root.Velocity = Vector3.new(0, 0, 0)
@@ -89,12 +137,14 @@ Section:AddToggle({
 					task.wait()
 				end
 			end)
+			print("Drag started")
 		else
 			StopAnim()
 			local root = GetRoot(plr)
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
 			end
+			print("Drag stopped")
 		end
 	end
 })
