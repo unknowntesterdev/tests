@@ -12,18 +12,28 @@ local Tab = Window:MakeTab({
 })
 
 local Section = Tab:AddSection({
-	Name = "Section"
-})
-
-OrionLib:MakeNotification({
-	Name = "Title!",
-	Content = "Notification content... what will it say??",
-	Image = "rbxassetid://4483345998",
-	Time = 5
+	Name = "Hacks"
 })
 
 Tab:AddButton({
 	Name = "Button!",
+	Callback = function()
+      		print("button pressed")
+  	end    
+})
+
+local Tab = Window:MakeTab({
+	Name = "Troll",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+	Name = "porns"
+})
+
+Tab:AddButton({
+	Name = "Button 2",
 	Callback = function()
       		print("button pressed")
   	end    
