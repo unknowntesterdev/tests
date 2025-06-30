@@ -1,4 +1,4 @@
--- Orion UI yükle
+-- Orion UI kütüphanesi yükle
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
 local Window = OrionLib:MakeWindow({Name = "test ui", HidePremium = false, SaveConfig = true, ConfigFolder = "HazardTest"})
@@ -15,10 +15,12 @@ local Section = Tab:AddSection({
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+
 local targetName = nil
 local TargetPlayer = nil
 
--- Oyuncu ismine göre hedef bulma
+-- İsimle oyuncu bulma fonksiyonu
 local function GetPlayerByName(name)
 	for _, player in pairs(Players:GetPlayers()) do
 		if player.Name:lower() == name:lower() then
@@ -28,7 +30,7 @@ local function GetPlayerByName(name)
 	return nil
 end
 
--- Tool ile dokunma eventiyle hedef belirleme
+-- Tool ile dokununca hedef belirleme
 local function SetupTool(tool)
 	if not tool then return end
 	local handle = tool:FindFirstChild("Handle")
@@ -39,12 +41,12 @@ local function SetupTool(tool)
 		local player = Players:GetPlayerFromCharacter(character)
 		if player and player ~= LocalPlayer then
 			TargetPlayer = player
-			print("Target set to (touch):", player.Name)
+			print("Target set by touch:", player.Name)
 		end
 	end)
 end
 
--- Karakter yüklendiğinde tool varsa ayarla
+-- Karakter yüklendiğinde veya tool eklendiğinde toolu ayarla
 LocalPlayer.CharacterAdded:Connect(function(char)
 	char.ChildAdded:Connect(function(child)
 		if child:IsA("Tool") then
@@ -61,69 +63,57 @@ if LocalPlayer.Character then
 	end
 end
 
--- Drag fonksiyonu
-local function DragTarget()
-	if not TargetPlayer then
-		warn("No target selected!")
-		return
-	end
-
+-- Drag fonksiyonu (Tween ile yumuşak hareket)
+local function DragTarget(target)
+	if not target or not target.Character then return end
 	local localChar = LocalPlayer.Character
-	local targetChar = TargetPlayer.Character
-	if not localChar or not targetChar then return end
+	if not localChar then return end
 
 	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
-	if hrp and targetHrp then
-		-- Hedefin 3 birim önüne hareket
-		hrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, 3)
-	end
+	local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp or not targetHrp then return end
+
+	local targetCFrame = targetHrp.CFrame * CFrame.new(0, 0, 3)
+
+	local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+	tween:Play()
 end
 
--- SitHead fonksiyonu
-local function SitHeadTarget()
-	if not TargetPlayer then
-		warn("No target selected!")
-		return
-	end
-
+-- SitHead fonksiyonu (pozisyon + kafa dönüşü)
+local function SitHeadTarget(target)
+	if not target or not target.Character then return end
 	local localChar = LocalPlayer.Character
-	local targetChar = TargetPlayer.Character
-	if not localChar or not targetChar then return end
+	if not localChar then return end
 
 	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local targetHead = targetChar:FindFirstChild("Head")
-	if hrp and targetHead then
-		hrp.CFrame = targetHead.CFrame * CFrame.new(0, 0, 0)
-		-- Kafayı hedefe döndür
-		localChar:SetPrimaryPartCFrame(CFrame.new(hrp.Position, targetHead.Position))
-	end
+	local head = localChar:FindFirstChild("Head")
+	local targetHead = target.Character:FindFirstChild("Head")
+	if not hrp or not head or not targetHead then return end
+
+	hrp.CFrame = targetHead.CFrame * CFrame.new(0, 0, 0)
+	localChar:SetPrimaryPartCFrame(CFrame.new(hrp.Position, targetHead.Position))
 end
 
--- Fling fonksiyonu
-local function FlingTarget()
-	if not TargetPlayer then
-		warn("No target selected!")
-		return
-	end
-
+-- Fling fonksiyonu (ani kuvvet)
+local function FlingTarget(target)
+	if not target or not target.Character then return end
 	local localChar = LocalPlayer.Character
-	local targetChar = TargetPlayer.Character
-	if not localChar or not targetChar then return end
+	if not localChar then return end
 
 	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
-	if hrp and targetHrp then
-		local direction = (targetHrp.Position - hrp.Position).Unit
-		local bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.Velocity = direction * 100
-		bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-		bodyVelocity.Parent = hrp
-		game.Debris:AddItem(bodyVelocity, 0.2)
-	end
+	local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp or not targetHrp then return end
+
+	local direction = (targetHrp.Position - hrp.Position).Unit
+	local bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.Velocity = direction * 100
+	bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+	bodyVelocity.Parent = hrp
+	game.Debris:AddItem(bodyVelocity, 0.2)
 end
 
--- UI TextBox: oyuncu ismi gir
+-- UI TextBox: hedef oyuncu ismi gir
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
@@ -133,8 +123,7 @@ Section:AddTextbox({
 	end
 })
 
--- UI Butonlar
-
+-- UI Butonlar: drag, sithead, fling
 Section:AddButton({
 	Name = "Drag Target",
 	Callback = function()
@@ -145,7 +134,7 @@ Section:AddButton({
 				return
 			end
 		end
-		DragTarget()
+		DragTarget(TargetPlayer)
 	end
 })
 
@@ -159,7 +148,7 @@ Section:AddButton({
 				return
 			end
 		end
-		SitHeadTarget()
+		SitHeadTarget(TargetPlayer)
 	end
 })
 
@@ -173,7 +162,7 @@ Section:AddButton({
 				return
 			end
 		end
-		FlingTarget()
+		FlingTarget(TargetPlayer)
 	end
 })
 
