@@ -1,4 +1,4 @@
--- Orion UI kütüphanesi yükle
+-- Orion UI kütüphanesi
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
 local Window = OrionLib:MakeWindow({Name = "test ui", HidePremium = false, SaveConfig = true, ConfigFolder = "HazardTest"})
@@ -14,157 +14,120 @@ local Section = Tab:AddSection({
 })
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
+local plr = Players.LocalPlayer
 
-local targetName = nil
-local TargetPlayer = nil
+-- UI için değişkenler
+local TargetedPlayerName = nil
+local TargetedPlayer = nil
+local DragToggle = false
 
--- İsimle oyuncu bulma fonksiyonu
-local function GetPlayerByName(name)
-	for _, player in pairs(Players:GetPlayers()) do
-		if player.Name:lower() == name:lower() then
-			return player
-		end
+-- DragVelocity Asset
+local Velocity_Asset = Instance.new("BodyVelocity")
+Velocity_Asset.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+Velocity_Asset.Velocity = Vector3.new(0, 0, 0)
+
+-- Fonksiyon: Toggle buton rengi değişimi
+local function ChangeToggleColor(button)
+	if button.Ticket_Asset.ImageColor3 == Color3.fromRGB(255,0,0) then
+		button.Ticket_Asset.ImageColor3 = Color3.fromRGB(0,255,0)
+	else
+		button.Ticket_Asset.ImageColor3 = Color3.fromRGB(255,0,0)
+	end
+end
+
+-- Fonksiyon: Oyuncunun HumanoidRootPart'ını al
+local function GetRoot(player)
+	if player and player.Character then
+		return player.Character:FindFirstChild("HumanoidRootPart")
 	end
 	return nil
 end
 
--- Tool ile dokununca hedef belirleme
-local function SetupTool(tool)
-	if not tool then return end
-	local handle = tool:FindFirstChild("Handle")
-	if not handle then return end
-	
-	handle.Touched:Connect(function(hit)
-		local character = hit.Parent
-		local player = Players:GetPlayerFromCharacter(character)
-		if player and player ~= LocalPlayer then
-			TargetPlayer = player
-			print("Target set by touch:", player.Name)
-		end
-	end)
+-- Animasyon fonksiyonları (burayı kendine göre düzenle)
+local function PlayAnim(animId, speed, loop)
+	print("Anim oynatılıyor:", animId)
+	-- Örnek: animasyon yükle ve oynat
 end
 
--- Karakter yüklendiğinde veya tool eklendiğinde toolu ayarla
-LocalPlayer.CharacterAdded:Connect(function(char)
-	char.ChildAdded:Connect(function(child)
-		if child:IsA("Tool") then
-			SetupTool(child)
-		end
-	end)
-end)
-
-if LocalPlayer.Character then
-	for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
-		if tool:IsA("Tool") then
-			SetupTool(tool)
-		end
-	end
+local function StopAnim()
+	print("Anim durduruldu")
+	-- Örnek: animasyon durdur
 end
 
--- Drag fonksiyonu (Tween ile yumuşak hareket)
-local function DragTarget(target)
-	if not target or not target.Character then return end
-	local localChar = LocalPlayer.Character
-	if not localChar then return end
-
-	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp or not targetHrp then return end
-
-	local targetCFrame = targetHrp.CFrame * CFrame.new(0, 0, 3)
-
-	local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
-	tween:Play()
-end
-
--- SitHead fonksiyonu (pozisyon + kafa dönüşü)
-local function SitHeadTarget(target)
-	if not target or not target.Character then return end
-	local localChar = LocalPlayer.Character
-	if not localChar then return end
-
-	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local head = localChar:FindFirstChild("Head")
-	local targetHead = target.Character:FindFirstChild("Head")
-	if not hrp or not head or not targetHead then return end
-
-	hrp.CFrame = targetHead.CFrame * CFrame.new(0, 0, 0)
-	localChar:SetPrimaryPartCFrame(CFrame.new(hrp.Position, targetHead.Position))
-end
-
--- Fling fonksiyonu (ani kuvvet)
-local function FlingTarget(target)
-	if not target or not target.Character then return end
-	local localChar = LocalPlayer.Character
-	if not localChar then return end
-
-	local hrp = localChar:FindFirstChild("HumanoidRootPart")
-	local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp or not targetHrp then return end
-
-	local direction = (targetHrp.Position - hrp.Position).Unit
-	local bodyVelocity = Instance.new("BodyVelocity")
-	bodyVelocity.Velocity = direction * 100
-	bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-	bodyVelocity.Parent = hrp
-	game.Debris:AddItem(bodyVelocity, 0.2)
-end
-
--- UI TextBox: hedef oyuncu ismi gir
+-- Textbox: hedef oyuncu ismini yaz
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
 	TextDisappear = true,
 	Callback = function(text)
-		targetName = text
+		TargetedPlayerName = text
+		TargetedPlayer = Players:FindFirstChild(text)
+		if TargetedPlayer then
+			print("Target set to:", text)
+		else
+			warn("Player not found:", text)
+		end
 	end
 })
 
--- UI Butonlar: drag, sithead, fling
-Section:AddButton({
-	Name = "Drag Target",
-	Callback = function()
-		if targetName and targetName ~= "" then
-			TargetPlayer = GetPlayerByName(targetName)
-			if not TargetPlayer then
-				warn("Player not found: "..targetName)
-				return
-			end
-		end
-		DragTarget(TargetPlayer)
-	end
-})
+-- DragTarget_Button oluştur
+local DragTarget_Button = Instance.new("TextButton")
+DragTarget_Button.Size = UDim2.new(0, 150, 0, 50)
+DragTarget_Button.Position = UDim2.new(0, 10, 0, 100)
+DragTarget_Button.Text = "Drag Target"
+DragTarget_Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 
-Section:AddButton({
-	Name = "Sit Head Target",
-	Callback = function()
-		if targetName and targetName ~= "" then
-			TargetPlayer = GetPlayerByName(targetName)
-			if not TargetPlayer then
-				warn("Player not found: "..targetName)
-				return
-			end
-		end
-		SitHeadTarget(TargetPlayer)
-	end
-})
+-- Ticket_Asset: buton içinde renk göstergesi için ImageLabel (örnek)
+local Ticket_Asset = Instance.new("ImageLabel", DragTarget_Button)
+Ticket_Asset.Name = "Ticket_Asset"
+Ticket_Asset.Size = UDim2.new(0, 30, 0, 30)
+Ticket_Asset.Position = UDim2.new(1, -35, 0.5, -15)
+Ticket_Asset.BackgroundTransparency = 1
+Ticket_Asset.ImageColor3 = Color3.fromRGB(255, 0, 0)
+Ticket_Asset.Image = "rbxassetid://3926305904" -- örnek tick icon
 
-Section:AddButton({
-	Name = "Fling Target",
-	Callback = function()
-		if targetName and targetName ~= "" then
-			TargetPlayer = GetPlayerByName(targetName)
-			if not TargetPlayer then
-				warn("Player not found: "..targetName)
-				return
-			end
-		end
-		FlingTarget(TargetPlayer)
+-- Butonu UI'ya ekle
+local TabContainer = Window.Container
+DragTarget_Button.Parent = TabContainer
+
+-- Butona tıklama eventi
+DragTarget_Button.MouseButton1Click:Connect(function()
+	if TargetedPlayer == nil then
+		warn("Lütfen geçerli hedef oyuncu ismi girin.")
+		return
 	end
-})
+
+	ChangeToggleColor(DragTarget_Button)
+	DragToggle = (DragTarget_Button.Ticket_Asset.ImageColor3 == Color3.fromRGB(0,255,0))
+
+	if DragToggle then
+		PlayAnim(10714360343, 0.5, 0)
+		spawn(function()
+			while DragToggle do
+				pcall(function()
+					local root = GetRoot(plr)
+					local targetRoot = GetRoot(TargetedPlayer)
+					if root and targetRoot then
+						if not root:FindFirstChild("BreakVelocity") then
+							local tempV = Velocity_Asset:Clone()
+							tempV.Name = "BreakVelocity"
+							tempV.Parent = root
+						end
+						root.CFrame = targetRoot.CFrame * CFrame.new(0, -2.5, 1) * CFrame.Angles(math.rad(-2), math.rad(-3), 0)
+						root.Velocity = Vector3.new(0, 0, 0)
+					end
+				end)
+				task.wait()
+			end
+		end)
+	else
+		StopAnim()
+		local root = GetRoot(plr)
+		if root and root:FindFirstChild("BreakVelocity") then
+			root.BreakVelocity:Destroy()
+		end
+	end
+end)
 
 -- Orion UI başlat
 OrionLib:Init()
