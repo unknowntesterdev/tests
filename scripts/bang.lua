@@ -126,96 +126,63 @@ end
 local RunService = game:GetService("RunService")
 
 local BangActive = false
-local BV -- BodyVelocity referansı
+local conn
+local speed = 20 -- hareket hızı (ne kadar büyük o kadar hızlı)
+local distance = 3 -- hedefin arkasında durma mesafesi (3 stud gibi)
+local oscillationRange = 1 -- ileri geri salınım mesafesi
+
+local function GetRoot(Player)
+	local char = Player and Player.Character
+	if char then
+		return char:FindFirstChild("HumanoidRootPart")
+	end
+	return nil
+end
 
 local function StartBang(target)
-    if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
-        warn("Geçerli hedef bulunamadı.")
-        return
-    end
-
+    if conn then conn:Disconnect() end
+    local t = 0
     local root = GetRoot(plr)
-    if not root then
-        warn("Kendi root bulunamadı.")
-        return
-    end
+    if not root then return end
 
-    BangActive = true
-
-    -- BodyVelocity oluştur (veya varsa kullan)
-    if root:FindFirstChild("BangVelocity") then
-        BV = root.BangVelocity
-    else
-        BV = Instance.new("BodyVelocity")
-        BV.Name = "BangVelocity"
-        BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-        BV.P = 1250
-        BV.Velocity = Vector3.new(0,0,0)
-        BV.Parent = root
-    end
-
-    local directionForward = 1 -- ileri geri yön kontrolü
-    local moveDistance = 2     -- ileri geri mesafe
-    local moveSpeed = 8        -- saniyede kaç birim hareket edecek
-
-    local moveAmount = 0       -- ilerleme miktarı (0 .. moveDistance arası)
-    
-    -- RunService ile sürekli hareket ve pozisyon ayarla
-    local conn
-    conn = RunService.Heartbeat:Connect(function(dt)
-        if not BangActive or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
-            if BV then BV:Destroy() end
-            conn:Disconnect()
+    conn = RunService.Heartbeat:Connect(function(deltaTime)
+        if not BangActive or not target or not target.Character or not GetRoot(target) then
+            StopBang()
             return
         end
 
-        if not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
-            if BV then BV:Destroy() end
-            conn:Disconnect()
-            return
-        end
+        t = t + deltaTime * speed
 
-        local root = GetRoot(plr)
         local targetRoot = GetRoot(target)
-        if not root or not targetRoot then return end
+        if targetRoot then
+            -- Hedefin bakış yönü
+            local lookVector = targetRoot.CFrame.LookVector
 
-        -- Hedefin yönü
-        local forwardVector = targetRoot.CFrame.LookVector
+            -- Tam hedefin arkasında base pozisyon (distance kadar geride)
+            local basePos = targetRoot.Position - (lookVector * distance)
 
-        -- Temel pozisyon: hedefin tam arkasında ve 2 stud yukarıda
-        local basePos = targetRoot.Position - forwardVector * 2 + Vector3.new(0, 2, 0)
+            -- İleri geri hareket için sin dalgası
+            local offset = math.sin(t) * oscillationRange
 
-        -- Hareket için ileri geri offset hesapla
-        moveAmount = moveAmount + directionForward * moveSpeed * dt
+            -- Salınım vektörü hedefin sağ yönü (Y eksenine göre sağ)
+            local rightVector = targetRoot.CFrame.RightVector
 
-        if moveAmount >= moveDistance then
-            moveAmount = moveDistance
-            directionForward = -1
-        elseif moveAmount <= 0 then
-            moveAmount = 0
-            directionForward = 1
+            -- Final pozisyon = base + sağa sola offset
+            local finalPos = basePos + rightVector * offset
+
+            -- Kendi rotanı hedefe dön
+            root.CFrame = CFrame.new(finalPos, targetRoot.Position) -- Baktığı yön hedefe dönük
+
+            -- Yavaş yukarı kalkma efekti verilebilir (isteğe bağlı)
+            -- root.Velocity = Vector3.new(0, 5, 0)
         end
-
-        local targetPos = basePos + forwardVector * moveAmount
-
-        -- root konumunu hedef pozisyona doğru yumuşak hareket ettir
-        local newPos = root.Position:Lerp(targetPos, 0.3)
-
-        -- BV ile hız ayarla
-        local velocity = (newPos - root.Position) / dt
-        BV.Velocity = velocity
-
-        -- Dönüşü hedefe bakacak şekilde ayarla
-        root.CFrame = CFrame.new(root.Position, targetRoot.Position)
-
     end)
 end
 
-local function StopBang()
-    BangActive = false
-    local root = GetRoot(plr)
-    if root and root:FindFirstChild("BangVelocity") then
-        root.BangVelocity:Destroy()
+function StopBang()
+    if conn then
+        conn:Disconnect()
+        conn = nil
     end
 end
 
