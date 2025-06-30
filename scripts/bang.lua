@@ -12,7 +12,7 @@ local Tab = Window:MakeTab({
 })
 
 local Section = Tab:AddSection({
-	Name = "Hacks"
+	Name = "Game Menu"
 })
 
 Tab:AddButton({
@@ -22,19 +22,3 @@ Tab:AddButton({
   	end    
 })
 
-local Tab = Window:MakeTab({
-	Name = "Troll",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-local Section = Tab:AddSection({
-	Name = "porns"
-})
-
-Tab:AddButton({
-	Name = "Button 2",
-	Callback = function()
-      		print("button pressed")
-  	end    
-})
