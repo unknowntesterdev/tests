@@ -12,6 +12,7 @@ Velocity_Asset.Velocity = Vector3.new(0, 0, 0)
 
 local TargetedPlayerName = ""
 local DragActive = false
+local HeadsitActive = false
 
 local function GetCharacter(Player)
 	return Player and Player.Character
@@ -57,7 +58,6 @@ local function StopAnim()
 	end
 end
 
--- Oyuncu arama fonksiyonu (isim veya DisplayName küçük harfe çevrilerek)
 local function GetPlayer(UserDisplay)
 	if UserDisplay ~= "" then
 		UserDisplay = UserDisplay:lower()
@@ -70,7 +70,7 @@ local function GetPlayer(UserDisplay)
 	return nil
 end
 
--- UI elemanları
+-- Target oyuncu adı için textbox
 Section:AddTextbox({
 	Name = "Target Player Name",
 	Default = "",
@@ -80,6 +80,7 @@ Section:AddTextbox({
 	end
 })
 
+-- Drag toggle butonu
 Section:AddButton({
 	Name = "Toggle Drag",
 	Callback = function()
@@ -92,11 +93,8 @@ Section:AddButton({
 		DragActive = not DragActive
 
 		if DragActive then
-			-- Buton rengini yeşil yap (örnek)
 			print("Drag başlatıldı")
-
 			PlayAnim(10714360343, 0.5, 0)
-
 			spawn(function()
 				repeat
 					pcall(function()
@@ -115,14 +113,58 @@ Section:AddButton({
 					task.wait()
 				until DragActive == false
 			end)
-
 		else
-			-- Buton rengini kırmızı yap (örnek)
 			print("Drag durduruldu")
 			StopAnim()
 			local root = GetRoot(plr)
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
+			end
+		end
+	end
+})
+
+-- Sit Head toggle
+Section:AddToggle({
+	Name = "Sit Head",
+	Default = false,
+	Callback = function(value)
+		HeadsitActive = value
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			Section:Toggle("Sit Head", false)
+			return
+		end
+
+		if HeadsitActive then
+			spawn(function()
+				repeat
+					pcall(function()
+						local root = GetRoot(plr)
+						if root and not root:FindFirstChild("BreakVelocity") then
+							local tempV = Velocity_Asset:Clone()
+							tempV.Name = "BreakVelocity"
+							tempV.Parent = root
+						end
+
+						local targetHead = target.Character and target.Character:FindFirstChild("Head")
+						if targetHead and plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+							plr.Character.Humanoid.Sit = true
+							root.CFrame = targetHead.CFrame * CFrame.new(0, 2, 0)
+							root.Velocity = Vector3.new(0, 0, 0)
+						end
+					end)
+					task.wait()
+				until HeadsitActive == false
+			end)
+		else
+			local root = GetRoot(plr)
+			if root and root:FindFirstChild("BreakVelocity") then
+				root.BreakVelocity:Destroy()
+			end
+			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+				plr.Character.Humanoid.Sit = false
 			end
 		end
 	end
