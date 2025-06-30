@@ -170,5 +170,137 @@ Section:AddButton({
 	end
 })
 
+-- Backpack Target Butonu
+local BackpackActive = false
+Section:AddButton({
+	Name = "Toggle Backpack Target",
+	Callback = function()
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			return
+		end
+
+		BackpackActive = not BackpackActive
+
+		if BackpackActive then
+			print("Backpack Target başladı")
+			spawn(function()
+				repeat
+					pcall(function()
+						local root = GetRoot(plr)
+						if root and not root:FindFirstChild("BreakVelocity") then
+							local tempV = Velocity_Asset:Clone()
+							tempV.Name = "BreakVelocity"
+							tempV.Parent = root
+						end
+
+						local targetRoot = GetRoot(target)
+						if targetRoot and plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+							plr.Character.Humanoid.Sit = true
+							root.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.2) * CFrame.Angles(0, math.rad(-3), 0)
+							root.Velocity = Vector3.new(0, 0, 0)
+						end
+					end)
+					task.wait()
+				until not BackpackActive
+			end)
+		else
+			print("Backpack Target durduruldu")
+			local root = GetRoot(plr)
+			if root and root:FindFirstChild("BreakVelocity") then
+				root.BreakVelocity:Destroy()
+			end
+			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+				plr.Character.Humanoid.Sit = false
+			end
+		end
+	end
+})
+
+-- Doggy Target Butonu
+local DoggyActive = false
+Section:AddButton({
+	Name = "Toggle Doggy Target",
+	Callback = function()
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			return
+		end
+
+		DoggyActive = not DoggyActive
+
+		if DoggyActive then
+			print("Doggy Target başladı")
+			PlayAnim(13694096724, 3.4, 0)
+			spawn(function()
+				repeat
+					pcall(function()
+						local root = GetRoot(plr)
+						if root and not root:FindFirstChild("BreakVelocity") then
+							local tempV = Velocity_Asset:Clone()
+							tempV.Name = "BreakVelocity"
+							tempV.Parent = root
+						end
+
+						local targetLowerTorso = target.Character and target.Character:FindFirstChild("LowerTorso")
+						if targetLowerTorso and root then
+							root.CFrame = targetLowerTorso.CFrame * CFrame.new(0, 0.23, 0)
+							root.Velocity = Vector3.new(0, 0, 0)
+						end
+					end)
+					task.wait()
+				until not DoggyActive
+			end)
+		else
+			print("Doggy Target durduruldu")
+			StopAnim()
+			local root = GetRoot(plr)
+			if root and root:FindFirstChild("BreakVelocity") then
+				root.BreakVelocity:Destroy()
+			end
+		end
+	end
+})
+
+-- Teleport Target Butonu
+Section:AddButton({
+	Name = "Teleport To Target",
+	Callback = function()
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			return
+		end
+		TeleportTO(0, 0, 0, target, "safe")
+	end
+})
+
+-- Teleport Fonksiyonu (aynı seninkisi)
+local function TeleportTO(posX,posY,posZ,player,method)
+	pcall(function()
+		if method == "safe" then
+			task.spawn(function()
+				for i = 1,30 do
+					task.wait()
+					GetRoot(plr).Velocity = Vector3.new(0,0,0)
+					if player == "pos" then
+						GetRoot(plr).CFrame = CFrame.new(posX,posY,posZ)
+					else
+						GetRoot(plr).CFrame = CFrame.new(GetRoot(player).Position) + Vector3.new(0,2,0)
+					end
+				end
+			end)
+		else
+			GetRoot(plr).Velocity = Vector3.new(0,0,0)
+			if player == "pos" then
+				GetRoot(plr).CFrame = CFrame.new(posX,posY,posZ)
+			else
+				GetRoot(plr).CFrame = CFrame.new(GetRoot(player).Position) + Vector3.new(0,2,0)
+			end
+		end
+	end)
+end
 
 OrionLib:Init()
