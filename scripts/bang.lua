@@ -123,11 +123,10 @@ local function PredictionTP(player,method)
     end
 end
 
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local BangActive = false
-local bangTweenDuration = 0.4  -- hız artırıldı
-local bangTweenInfo = TweenInfo.new(bangTweenDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+local BV -- BodyVelocity referansı
 
 local function StartBang(target)
     if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
@@ -143,36 +142,83 @@ local function StartBang(target)
 
     BangActive = true
 
-    spawn(function()
-        while BangActive and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and target.Character and target.Character:FindFirstChild("HumanoidRootPart") do
-            local root = GetRoot(plr)
-            local targetRoot = GetRoot(target)
-            if not root or not targetRoot then break end
+    -- BodyVelocity oluştur (veya varsa kullan)
+    if root:FindFirstChild("BangVelocity") then
+        BV = root.BangVelocity
+    else
+        BV = Instance.new("BodyVelocity")
+        BV.Name = "BangVelocity"
+        BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        BV.P = 1250
+        BV.Velocity = Vector3.new(0,0,0)
+        BV.Parent = root
+    end
 
-            -- Hedefin anlık yönü (LookVector)
-            local forwardVector = targetRoot.CFrame.LookVector
-            -- Hedefin arkasındaki temel pozisyon (1.5 stud geride)
-            local basePosition = targetRoot.Position - forwardVector * 1.5
+    local directionForward = 1 -- ileri geri yön kontrolü
+    local moveDistance = 2     -- ileri geri mesafe
+    local moveSpeed = 8        -- saniyede kaç birim hareket edecek
 
-            -- İleri pozisyon (1.5 stud arkasından 2 stud ileri)
-            local forwardPos = basePosition + forwardVector * 2
-
-            -- Tween ileri
-            local tweenForward = TweenService:Create(root, bangTweenInfo, {CFrame = CFrame.new(forwardPos, targetRoot.Position)})
-            tweenForward:Play()
-            tweenForward.Completed:Wait()
-
-            -- Tween geri
-            local tweenBackward = TweenService:Create(root, bangTweenInfo, {CFrame = CFrame.new(basePosition, targetRoot.Position)})
-            tweenBackward:Play()
-            tweenBackward.Completed:Wait()
+    local moveAmount = 0       -- ilerleme miktarı (0 .. moveDistance arası)
+    
+    -- RunService ile sürekli hareket ve pozisyon ayarla
+    local conn
+    conn = RunService.Heartbeat:Connect(function(dt)
+        if not BangActive or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
+            if BV then BV:Destroy() end
+            conn:Disconnect()
+            return
         end
+
+        if not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
+            if BV then BV:Destroy() end
+            conn:Disconnect()
+            return
+        end
+
+        local root = GetRoot(plr)
+        local targetRoot = GetRoot(target)
+        if not root or not targetRoot then return end
+
+        -- Hedefin yönü
+        local forwardVector = targetRoot.CFrame.LookVector
+
+        -- Temel pozisyon: hedefin tam arkasında ve 2 stud yukarıda
+        local basePos = targetRoot.Position - forwardVector * 2 + Vector3.new(0, 2, 0)
+
+        -- Hareket için ileri geri offset hesapla
+        moveAmount = moveAmount + directionForward * moveSpeed * dt
+
+        if moveAmount >= moveDistance then
+            moveAmount = moveDistance
+            directionForward = -1
+        elseif moveAmount <= 0 then
+            moveAmount = 0
+            directionForward = 1
+        end
+
+        local targetPos = basePos + forwardVector * moveAmount
+
+        -- root konumunu hedef pozisyona doğru yumuşak hareket ettir
+        local newPos = root.Position:Lerp(targetPos, 0.3)
+
+        -- BV ile hız ayarla
+        local velocity = (newPos - root.Position) / dt
+        BV.Velocity = velocity
+
+        -- Dönüşü hedefe bakacak şekilde ayarla
+        root.CFrame = CFrame.new(root.Position, targetRoot.Position)
+
     end)
 end
 
 local function StopBang()
     BangActive = false
+    local root = GetRoot(plr)
+    if root and root:FindFirstChild("BangVelocity") then
+        root.BangVelocity:Destroy()
+    end
 end
+
 
 
 -- Target Player Textbox
@@ -413,24 +459,22 @@ Section:AddButton({
     end
 })
 
-local BangActiveToggle = false
+local BangActive = false
 
 Section:AddButton({
-    Name = "Bang Toggle",
+    Name = "Bang",
     Callback = function()
         local target = GetPlayer(TargetedPlayerName)
         if not target then
-            warn("Lütfen geçerli hedef oyuncu ismi girin.")
+            warn("Geçerli hedef yok")
             return
         end
 
-        BangActiveToggle = not BangActiveToggle
+        BangActive = not BangActive
 
-        if BangActiveToggle then
-            print("Bang başladı")
+        if BangActive then
             StartBang(target)
         else
-            print("Bang durduruldu")
             StopBang()
         end
     end
