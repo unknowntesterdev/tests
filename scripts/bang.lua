@@ -354,69 +354,90 @@ Section:AddToggle({
 	end
 })
 
+local function FaceSitBang(target)
+	if not target then return end
+	local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+	local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	if not (root and targetRoot) then return end
+
+	-- Otur
+	if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+		plr.Character.Humanoid.Sit = true
+	end
+
+	-- BreakVelocity ekle
+	if not root:FindFirstChild("BreakVelocity") then
+		local v = Velocity_Asset:Clone()
+		v.Name = "BreakVelocity"
+		v.Parent = root
+	end
+
+	-- Noclip aç
+	ToggleNoclip(true)
+
+	-- Hareketi RunService ile yönet
+	connection = RunService.Heartbeat:Connect(function()
+		if not FaceSitBangActive then
+			connection:Disconnect()
+			connection = nil
+			return
+		end
+		if not (root and root.Parent and targetRoot and targetRoot.Parent) then
+			connection:Disconnect()
+			connection = nil
+			return
+		end
+
+		-- İleri geri hareket için zaman fonksiyonu
+		local time = tick() % 1 -- 0-1 arası periyot
+		local offsetAmount = 1.1
+		local forwardVector = targetRoot.CFrame.LookVector
+		local basePos = targetRoot.Position + Vector3.new(0, 1.9, 0)
+
+		-- Sinüs fonksiyonu ile ileri geri salınım
+		local offset = math.sin(time * math.pi * 2) * offsetAmount
+
+		-- CFrame ayarla (ileriye doğru ileri geri hareket)
+		root.CFrame = CFrame.new(basePos + forwardVector * offset, basePos)
+		root.Velocity = Vector3.new(0,0,0)
+	end)
+end
+
+local function StopFaceSitBang()
+	FaceSitBangActive = false
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+
+	local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+	if root and root:FindFirstChild("BreakVelocity") then
+		root.BreakVelocity:Destroy()
+	end
+
+	-- Noclip kapat
+	ToggleNoclip(false)
+
+	if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+		plr.Character.Humanoid.Sit = false
+	end
+end
+
+-- UI Toggle callback örnek:
 Section:AddToggle({
 	Name = "Face Sit Bang (İleri Geri + Noclip)",
 	Default = false,
 	Callback = function(Value)
 		FaceSitBangActive = Value
 		local target = GetPlayer(TargetedPlayerName)
-		if not target then
-			warn("Geçerli hedef bulunamadı.")
-			return
-		end
-		local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-		local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-		if not (root and targetRoot) then return end
-
-		if FaceSitBangActive then
-			-- Noclip aç
-			ToggleNoclip(true)
-
-			-- Otur
-			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-				plr.Character.Humanoid.Sit = true
+		if Value then
+			if target then
+				FaceSitBang(target)
+			else
+				warn("Geçerli hedef bulunamadı.")
 			end
-
-			-- BreakVelocity ekle
-			if not root:FindFirstChild("BreakVelocity") then
-				local v = Velocity_Asset:Clone()
-				v.Name = "BreakVelocity"
-				v.Parent = root
-			end
-
-			local basePos = targetRoot.Position + Vector3.new(0, 1.9, 0)
-			local forwardVector = targetRoot.CFrame.LookVector
-			local forwardOffset = forwardVector * 1.1
-
-			spawn(function()
-				while FaceSitBangActive and root.Parent and targetRoot.Parent do
-					local tweenInfo = TweenInfo.new(tweenDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-					TweenForward = TweenService:Create(root, tweenInfo, {
-						CFrame = CFrame.new(basePos + forwardOffset, basePos)
-					})
-					TweenForward:Play()
-					TweenForward.Completed:Wait()
-
-					TweenBackward = TweenService:Create(root, tweenInfo, {
-						CFrame = CFrame.new(basePos, basePos + forwardOffset)
-					})
-					TweenBackward:Play()
-					TweenBackward.Completed:Wait()
-				end
-			end)
 		else
-			-- Noclip kapat
-			ToggleNoclip(false)
-
-			-- BreakVelocity kaldır
-			if root and root:FindFirstChild("BreakVelocity") then
-				root.BreakVelocity:Destroy()
-			end
-
-			-- Oturmayı bırak
-			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-				plr.Character.Humanoid.Sit = false
-			end
+			StopFaceSitBang()
 		end
 	end
 })
