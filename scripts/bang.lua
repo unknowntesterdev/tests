@@ -344,3 +344,101 @@ Section:AddToggle({
         end
     end
 })
+
+Section:AddToggle({
+    Name = "Face Sit v3",
+    Default = false,
+    Callback = function(Value)
+        FaceSitActive = Value
+
+        local target = GetPlayer(TargetedPlayerName)
+        if not target then
+            warn("Geçerli hedef bulunamadı.")
+            return
+        end
+
+        local root = GetRoot(plr)
+        local targetRoot = GetRoot(target)
+
+        if not (root and targetRoot) then return end
+
+        if Value then
+            -- NoClip için Collision'ı kapat
+            if plr.Character then
+                for _, part in ipairs(plr.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+
+            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                plr.Character.Humanoid.Sit = true
+            end
+
+            spawn(function()
+                local oscillationSpeed = 0.15 -- Daha hızlı hareket
+                local oscillationDistance = 0.4 -- Daha geniş hareket
+                local timeOffset = 0
+                local lastPosition = root.Position
+
+                while FaceSitActive and root and targetRoot do
+                    pcall(function()
+                        -- NoClip için sürekli collision kontrolü
+                        if plr.Character then
+                            for _, part in ipairs(plr.Character:GetDescendants()) do
+                                if part:IsA("BasePart") then
+                                    part.CanCollide = false
+                                end
+                            end
+                        end
+
+                        if not root:FindFirstChild("BreakVelocity") then
+                            local v = Velocity_Asset:Clone()
+                            v.Name = "BreakVelocity"
+                            v.Parent = root
+                        end
+
+                        -- Yüzünün önüne pozisyon hesapla:
+                        local forward = targetRoot.CFrame.lookVector
+                        timeOffset = timeOffset + oscillationSpeed
+                        
+                        -- Daha pürüzsüz hareket için sinüs fonksiyonu
+                        local oscillation = math.sin(timeOffset * 2) * oscillationDistance
+                        
+                        -- Hedef hareket ederse daha iyi takip için smooth position
+                        local targetPos = targetRoot.Position + Vector3.new(0, 1.9, 0)
+                        local desiredPos = targetPos + forward * (1.2 + oscillation)
+                        
+                        -- Anlık teleport yerine smooth hareket
+                        root.CFrame = CFrame.new(desiredPos, targetPos)
+                        root.Velocity = Vector3.new(0, 0, 0)
+                        
+                        -- NoClip için pozisyon koruma
+                        if (root.Position - lastPosition).Magnitude > 5 then
+                            root.CFrame = CFrame.new(lastPosition)
+                        end
+                        lastPosition = root.Position
+                    end)
+                    task.wait()
+                end
+            end)
+        else
+            -- NoClip'i kapat
+            if plr.Character then
+                for _, part in ipairs(plr.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+
+            if root and root:FindFirstChild("BreakVelocity") then
+                root.BreakVelocity:Destroy()
+            end
+            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                plr.Character.Humanoid.Sit = false
+            end
+        end
+    end
+})
