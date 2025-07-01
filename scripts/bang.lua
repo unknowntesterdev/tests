@@ -288,61 +288,9 @@ Section:AddToggle({
 	end
 })
 
-Section:AddToggle({
-	Name = "Sit Bang",
-	Default = false,
-	Callback = function(Value)
-		BangActive = Value
-
-		local target = GetPlayer(TargetedPlayerName)
-		if not target then
-			warn("Lütfen geçerli hedef oyuncu ismi girin.")
-			return
-		end
-
-		local root = GetRoot(plr)
-		local targetHead = target.Character and target.Character:FindFirstChild("Head")
-
-		if not (root and targetHead) then return end
-
-		if Value then
-			-- Oturt
-			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-				plr.Character.Humanoid.Sit = true
-			end
-
-			-- Kafa üstünde ileri geri hareket
-			local basePos = targetHead.Position + Vector3.new(0, 2.1, 0)
-			local forwardOffset = Vector3.new(0, 0, -0.8) -- ileri geri mesafesi
-
-			spawn(function()
-				while BangActive and root and targetHead do
-					local forwardPos = basePos + forwardOffset
-					local tweenForward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {
-						CFrame = CFrame.new(forwardPos, targetHead.Position)
-					})
-					tweenForward:Play()
-					tweenForward.Completed:Wait()
-
-					local backwardPos = basePos
-					local tweenBackward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {
-						CFrame = CFrame.new(backwardPos, targetHead.Position)
-					})
-					tweenBackward:Play()
-					tweenBackward.Completed:Wait()
-				end
-			end)
-		else
-			-- Durdur
-			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-				plr.Character.Humanoid.Sit = false
-			end
-		end
-	end
-})
 
 Section:AddToggle({
-	Name = "Face Sit (Bang)",
+	Name = "Face Sit (Sabit)",
 	Default = false,
 	Callback = function(Value)
 		local FaceSitActive = Value
@@ -364,33 +312,34 @@ Section:AddToggle({
 				plr.Character.Humanoid.Sit = true
 			end
 
-			-- Hedefin yüzüne oturmak için pozisyon
-			local basePos = targetRoot.Position + Vector3.new(0, 1.9, 1.1)
-			local forwardOffset = Vector3.new(0, 0, -0.8)
-
+			-- Yüz tarafına oturma pozisyonu (hedefin önünde, hafif yukarıda)
 			spawn(function()
 				while FaceSitActive and root and targetRoot do
-					-- ileri (yüze baskı)
-					local forwardPos = basePos + forwardOffset
-					local tweenForward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {
-						CFrame = CFrame.new(forwardPos, targetRoot.Position)
-					})
-					tweenForward:Play()
-					tweenForward.Completed:Wait()
+					pcall(function()
+						if not root:FindFirstChild("BreakVelocity") then
+							local v = Velocity_Asset:Clone()
+							v.Name = "BreakVelocity"
+							v.Parent = root
+						end
 
-					-- geri (tekrar oturur pozisyona)
-					local tweenBackward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {
-						CFrame = CFrame.new(basePos, targetRoot.Position)
-					})
-					tweenBackward:Play()
-					tweenBackward.Completed:Wait()
+						-- Hedefin önüne oturt
+						local faceSitCFrame = targetRoot.CFrame * CFrame.new(0, 1.9, 1.1)
+						root.CFrame = faceSitCFrame
+						root.Velocity = Vector3.new(0, 0, 0)
+					end)
+					task.wait()
 				end
 			end)
 		else
-			-- Durdur
+			-- Sıfırla
+			local root = GetRoot(plr)
+			if root and root:FindFirstChild("BreakVelocity") then
+				root.BreakVelocity:Destroy()
+			end
 			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
 				plr.Character.Humanoid.Sit = false
 			end
 		end
 	end
 })
+
