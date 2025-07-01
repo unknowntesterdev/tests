@@ -345,8 +345,9 @@ Section:AddToggle({
     end
 })
 
+
 Section:AddToggle({
-    Name = "Face Bang (Standing Behind)",
+    Name = "Face Bang (Standing)",
     Default = false,
     Callback = function(Value)
         FaceSitActive = Value
@@ -363,9 +364,14 @@ Section:AddToggle({
         if not (root and targetRoot) then return end
 
         if Value then
+            -- Karakterin ayakta durmasını sağla
+            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                plr.Character.Humanoid.Sit = false
+            end
+
             spawn(function()
-                local oscillationSpeed = 0.15 -- ileri-geri hız
-                local oscillationDistance = 0.5 -- mesafe
+                local oscillationSpeed = -1 -- Hareket hızı
+                local oscillationDistance = 1 -- Hareket mesafesi
                 local timeOffset = 0
 
                 while FaceSitActive and root and targetRoot do
@@ -376,12 +382,18 @@ Section:AddToggle({
                             v.Parent = root
                         end
 
+                        -- Hedefin arkasına pozisyon hesapla
                         local backward = -targetRoot.CFrame.LookVector -- hedefin arkası
                         timeOffset = timeOffset + oscillationSpeed
+                        
+                        -- Sinüs fonksiyonu ile ileri-geri hareket
                         local oscillation = math.sin(timeOffset) * oscillationDistance
-
-                        local basePos = targetRoot.Position + Vector3.new(0, 0, 0) + backward * (1.2 + oscillation)
-                        root.CFrame = CFrame.new(basePos, targetRoot.Position + Vector3.new(0, 1.9, 0))
+                        
+                        -- Hedefin arkasında, biraz yukarıda ve ileri-geri hareket eden pozisyon
+                        local pos = targetRoot.Position + Vector3.new(0, 0.5, 0) + backward * (1.5 + oscillation)
+                        
+                        -- Karakteri hedefe doğru bakacak şekilde konumlandır
+                        root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0,1.5,0))
                         root.Velocity = Vector3.new(0, 0, 0)
                     end)
                     task.wait()
@@ -391,7 +403,7 @@ Section:AddToggle({
             if root and root:FindFirstChild("BreakVelocity") then
                 root.BreakVelocity:Destroy()
             end
+            -- Oturma durumunu değiştirmeye gerek yok çünkü zaten ayakta
         end
     end
 })
-
