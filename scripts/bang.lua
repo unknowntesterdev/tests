@@ -346,7 +346,7 @@ Section:AddToggle({
 })
 
 Section:AddToggle({
-    Name = "Face Bang (Standing)",
+    Name = "Face Bang (Standing Behind)",
     Default = false,
     Callback = function(Value)
         FaceSitActive = Value
@@ -364,8 +364,8 @@ Section:AddToggle({
 
         if Value then
             spawn(function()
-                local oscillationSpeed = -1 -- Hareket hızı
-                local oscillationDistance = 1 -- Geri-ileri mesafe
+                local oscillationSpeed = 0.15 -- ileri-geri hız
+                local oscillationDistance = 0.5 -- mesafe
                 local timeOffset = 0
 
                 while FaceSitActive and root and targetRoot do
@@ -376,14 +376,12 @@ Section:AddToggle({
                             v.Parent = root
                         end
 
-                        -- Yüzünün önünde ileri-geri pozisyonu
-                        local forward = targetRoot.CFrame.LookVector
+                        local backward = -targetRoot.CFrame.LookVector -- hedefin arkası
                         timeOffset = timeOffset + oscillationSpeed
                         local oscillation = math.sin(timeOffset) * oscillationDistance
-                        
-                        local pos = targetRoot.Position + Vector3.new(0, 0, 0) + forward * (1.1 + oscillation)
 
-                        root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0, 1.9, 0))
+                        local basePos = targetRoot.Position + Vector3.new(0, 0, 0) + backward * (1.2 + oscillation)
+                        root.CFrame = CFrame.new(basePos, targetRoot.Position + Vector3.new(0, 1.9, 0))
                         root.Velocity = Vector3.new(0, 0, 0)
                     end)
                     task.wait()
