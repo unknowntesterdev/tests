@@ -102,41 +102,6 @@ Section:AddTextbox({
 	end
 })
 
-Section:AddToggle({
-	Name = "Drag",
-	Default = false,
-	Callback = function(Value)
-		DragActive = Value
-		local target = GetPlayer(TargetedPlayerName)
-		if not target then warn("Lütfen geçerli hedef oyuncu ismi girin.") return end
-
-		if Value then
-			PlayAnim(10714360343, 0.5, 0)
-			spawn(function()
-				repeat
-					pcall(function()
-						local root = GetRoot(plr)
-						local targetRightHand = target.Character and target.Character:FindFirstChild("RightHand")
-						if root and targetRightHand then
-							if not root:FindFirstChild("BreakVelocity") then
-								local tempV = Velocity_Asset:Clone()
-								tempV.Name = "BreakVelocity"
-								tempV.Parent = root
-							end
-							root.CFrame = targetRightHand.CFrame * CFrame.new(0, -2.5, 1) * CFrame.Angles(math.rad(-2), math.rad(-3), 0)
-							root.Velocity = Vector3.new(0, 0, 0)
-						end
-					end)
-					task.wait()
-				until not DragActive
-			end)
-		else
-			StopAnim()
-			local root = GetRoot(plr)
-			if root and root:FindFirstChild("BreakVelocity") then root.BreakVelocity:Destroy() end
-		end
-	end
-})
 
 Section:AddToggle({
 	Name = "Sit Head",
@@ -210,44 +175,9 @@ Section:AddToggle({
 	end
 })
 
-Section:AddToggle({
-	Name = "Doggy",
-	Default = false,
-	Callback = function(Value)
-		DoggyActive = Value
-		local target = GetPlayer(TargetedPlayerName)
-		if not target then warn("Lütfen geçerli hedef oyuncu ismi girin.") return end
-
-		if Value then
-			PlayAnim(13694096724, 3.4, 0)
-			spawn(function()
-				repeat
-					pcall(function()
-						local root = GetRoot(plr)
-						if root and not root:FindFirstChild("BreakVelocity") then
-							local tempV = Velocity_Asset:Clone()
-							tempV.Name = "BreakVelocity"
-							tempV.Parent = root
-						end
-						local targetLowerTorso = target.Character and target.Character:FindFirstChild("LowerTorso")
-						if targetLowerTorso and root then
-							root.CFrame = targetLowerTorso.CFrame * CFrame.new(0, 0.23, 0)
-							root.Velocity = Vector3.new(0, 0, 0)
-						end
-					end)
-					task.wait()
-				until not DoggyActive
-			end)
-		else
-			StopAnim()
-			local root = GetRoot(plr)
-			if root and root:FindFirstChild("BreakVelocity") then root.BreakVelocity:Destroy() end
-		end
-	end
-})
 
 Section:AddToggle({
-	Name = "Fly Attach + Animation",
+	Name = "Suck v1",
 	Default = false,
 	Callback = function(Value)
 		running = Value
@@ -303,7 +233,7 @@ Section:AddToggle({
 
 
 Section:AddToggle({
-	Name = "Face Sit (Ön Tarafa Otur v2)",
+	Name = "Face Sit",
 	Default = false,
 	Callback = function(Value)
 		FaceSitActive = Value
@@ -353,92 +283,3 @@ Section:AddToggle({
 		end
 	end
 })
-
-local function FaceSitBang(target)
-	if not target then return end
-	local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-	local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-	if not (root and targetRoot) then return end
-
-	-- Otur
-	if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-		plr.Character.Humanoid.Sit = true
-	end
-
-	-- BreakVelocity ekle
-	if not root:FindFirstChild("BreakVelocity") then
-		local v = Velocity_Asset:Clone()
-		v.Name = "BreakVelocity"
-		v.Parent = root
-	end
-
-	-- Noclip aç
-	ToggleNoclip(true)
-
-	-- Hareketi RunService ile yönet
-	connection = RunService.Heartbeat:Connect(function()
-		if not FaceSitBangActive then
-			connection:Disconnect()
-			connection = nil
-			return
-		end
-		if not (root and root.Parent and targetRoot and targetRoot.Parent) then
-			connection:Disconnect()
-			connection = nil
-			return
-		end
-
-		-- İleri geri hareket için zaman fonksiyonu
-		local time = tick() % 1 -- 0-1 arası periyot
-		local offsetAmount = 1.1
-		local forwardVector = targetRoot.CFrame.LookVector
-		local basePos = targetRoot.Position + Vector3.new(0, 1.9, 0)
-
-		-- Sinüs fonksiyonu ile ileri geri salınım
-		local offset = math.sin(time * math.pi * 2) * offsetAmount
-
-		-- CFrame ayarla (ileriye doğru ileri geri hareket)
-		root.CFrame = CFrame.new(basePos + forwardVector * offset, basePos)
-		root.Velocity = Vector3.new(0,0,0)
-	end)
-end
-
-local function StopFaceSitBang()
-	FaceSitBangActive = false
-	if connection then
-		connection:Disconnect()
-		connection = nil
-	end
-
-	local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-	if root and root:FindFirstChild("BreakVelocity") then
-		root.BreakVelocity:Destroy()
-	end
-
-	-- Noclip kapat
-	ToggleNoclip(false)
-
-	if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-		plr.Character.Humanoid.Sit = false
-	end
-end
-
--- UI Toggle callback örnek:
-Section:AddToggle({
-	Name = "Face Sit Bang (İleri Geri + Noclip)",
-	Default = false,
-	Callback = function(Value)
-		FaceSitBangActive = Value
-		local target = GetPlayer(TargetedPlayerName)
-		if Value then
-			if target then
-				FaceSitBang(target)
-			else
-				warn("Geçerli hedef bulunamadı.")
-			end
-		else
-			StopFaceSitBang()
-		end
-	end
-})
-
