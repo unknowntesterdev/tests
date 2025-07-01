@@ -308,7 +308,7 @@ Section:AddToggle({
 
             spawn(function()
                 local oscillationSpeed = 0.1 -- Hareket hızı (daha hızlı için azalt)
-                local oscillationDistance = 1 -- Hareket mesafesi
+                local oscillationDistance = 3 -- Hareket mesafesi
                 local timeOffset = 0
 
                 while FaceSitActive and root and targetRoot do
