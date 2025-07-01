@@ -380,8 +380,8 @@ Section:AddToggle({
 
             spawn(function()
                 local bangSpeed = 0.25 -- Hareket hızı
-                local bangDepth = 1.8   -- Hareket derinliği
-                local upDownMovement = 0.3 -- Yukarı-aşağı hareket
+                local bangDepth = 1   -- Hareket derinliği
+                local upDownMovement = 0.1 -- Yukarı-aşağı hareket
                 local timePassed = 0
                 local baseOffset = CFrame.new(0, 0.5, -1.2) -- Temel pozisyon
 
