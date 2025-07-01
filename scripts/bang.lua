@@ -379,7 +379,7 @@ Section:AddToggle({
             end
 
             spawn(function()
-                local bangSpeed = 0.15 -- Hareket hızı
+                local bangSpeed = -1 -- Hareket hızı
                 local bangDepth = 1   -- Hareket derinliği
                 local upDownMovement = 0.1 -- Yukarı-aşağı hareket
                 local timePassed = 0
@@ -450,92 +450,3 @@ Section:AddToggle({
     end
 })
 
-Section:AddToggle({
-    Name = "Standing Face Bang",
-    Default = false,
-    Callback = function(Value)
-        StandingFaceBangActive = Value
-
-        local target = GetPlayer(TargetedPlayerName)
-        if not target then
-            warn("Hedef oyuncu bulunamadı!")
-            return
-        end
-
-        local root = GetRoot(plr)
-        local targetRoot = GetRoot(target)
-        if not (root and targetRoot) then return end
-
-        if Value then
-            -- Karakter ayakta dursun
-            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-                plr.Character.Humanoid.Sit = false
-                plr.Character.Humanoid.AutoRotate = false
-                plr.Character.Humanoid.PlatformStand = true
-            end
-
-            spawn(function()
-                local bangSpeed = 0.2 -- Hareket hızı
-                local bangDepth = 1.2 -- İleri-geri mesafe
-                local upDownMovement = 0.15 -- Hafif yukarı-aşağı hareket
-                local timePassed = 0
-                local faceHeight = 1.7 -- Yüz yüksekliği
-
-                while StandingFaceBangActive and root and targetRoot do
-                    pcall(function()
-                        -- Hız kontrolü
-                        if not root:FindFirstChild("FaceBangVelocity") then
-                            local v = Instance.new("BodyVelocity")
-                            v.Name = "FaceBangVelocity"
-                            v.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                            v.P = 15000
-                            v.Velocity = Vector3.new(0, 0, 0)
-                            v.Parent = root
-                        end
-
-                        -- Hareket hesaplamaları
-                        timePassed = timePassed + bangSpeed
-                        local forwardBack = math.sin(timePassed) * bangDepth
-                        local verticalMove = math.cos(timePassed * 2) * upDownMovement
-                        
-                        -- Hedefin yüz pozisyonu
-                        local targetFacePos = targetRoot.Position + Vector3.new(0, faceHeight + verticalMove, 0)
-                        local faceDirection = targetRoot.CFrame.LookVector -- Yüzün baktığı yön
-                        
-                        -- Pozisyon ayarı (yüze doğru yaklaşma)
-                        local finalPos = targetFacePos + (faceDirection * (1.3 - forwardBack))
-                        
-                        -- Duruş ve rotasyon
-                        root.CFrame = CFrame.new(finalPos, targetFacePos) * CFrame.Angles(math.rad(-5), 0, 0)
-                        root.Velocity = Vector3.new(0, 0, 0)
-                        
-                        -- Üst gövde animasyonu
-                        if plr.Character and plr.Character:FindFirstChild("UpperTorso") then
-                            local upperBodyAngle = math.rad(-10 - (math.sin(timePassed) * 8))
-                            plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, -0.5, 0) * CFrame.Angles(upperBodyAngle, 0, 0)
-                        end
-                    end)
-                    task.wait()
-                end
-            end)
-        else
-            -- Temizlik işlemleri
-            if root and root:FindFirstChild("FaceBangVelocity") then
-                root.FaceBangVelocity:Destroy()
-            end
-            
-            if plr.Character then
-                local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.AutoRotate = true
-                    humanoid.PlatformStand = false
-                end
-                
-                -- Vücut pozisyonunu sıfırla
-                if plr.Character:FindFirstChild("UpperTorso") then
-                    plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, -0.5, 0)
-                end
-            end
-        end
-    end
-})
