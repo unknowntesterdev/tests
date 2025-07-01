@@ -344,3 +344,56 @@ Section:AddToggle({
         end
     end
 })
+
+Section:AddToggle({
+    Name = "Face Bang (Standing)",
+    Default = false,
+    Callback = function(Value)
+        FaceSitActive = Value
+
+        local target = GetPlayer(TargetedPlayerName)
+        if not target then
+            warn("Geçerli hedef bulunamadı.")
+            return
+        end
+
+        local root = GetRoot(plr)
+        local targetRoot = GetRoot(target)
+
+        if not (root and targetRoot) then return end
+
+        if Value then
+            spawn(function()
+                local oscillationSpeed = -1 -- Hareket hızı
+                local oscillationDistance = 1 -- Geri-ileri mesafe
+                local timeOffset = 0
+
+                while FaceSitActive and root and targetRoot do
+                    pcall(function()
+                        if not root:FindFirstChild("BreakVelocity") then
+                            local v = Velocity_Asset:Clone()
+                            v.Name = "BreakVelocity"
+                            v.Parent = root
+                        end
+
+                        -- Yüzünün önünde ileri-geri pozisyonu
+                        local forward = targetRoot.CFrame.LookVector
+                        timeOffset = timeOffset + oscillationSpeed
+                        local oscillation = math.sin(timeOffset) * oscillationDistance
+                        
+                        local pos = targetRoot.Position + Vector3.new(0, 0, 0) + forward * (1.1 + oscillation)
+
+                        root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0, 1.9, 0))
+                        root.Velocity = Vector3.new(0, 0, 0)
+                    end)
+                    task.wait()
+                end
+            end)
+        else
+            if root and root:FindFirstChild("BreakVelocity") then
+                root.BreakVelocity:Destroy()
+            end
+        end
+    end
+})
+
