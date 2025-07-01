@@ -379,7 +379,7 @@ Section:AddToggle({
             end
 
             spawn(function()
-                local bangSpeed = 0.25 -- Hareket hızı
+                local bangSpeed = 0.15 -- Hareket hızı
                 local bangDepth = 1   -- Hareket derinliği
                 local upDownMovement = 0.1 -- Yukarı-aşağı hareket
                 local timePassed = 0
@@ -506,8 +506,8 @@ Section:AddToggle({
             end
 
             spawn(function()
-                local bangSpeed = 0.22 -- R6 için optimize hız
-                local bangDepth = 1.6  -- R6 için mesafe
+                local bangSpeed = 0.15 -- R6 için optimize hız
+                local bangDepth = 1  -- R6 için mesafe
                 local upDownMovement = 0.25
                 local timePassed = 0
 
