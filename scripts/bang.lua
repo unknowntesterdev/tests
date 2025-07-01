@@ -290,14 +290,14 @@ Section:AddToggle({
 
 
 Section:AddToggle({
-	Name = "Face Sit (Sabit)",
+	Name = "Face Sit (Ön Tarafa Otur)",
 	Default = false,
 	Callback = function(Value)
-		local FaceSitActive = Value
+		FaceSitActive = Value
 
 		local target = GetPlayer(TargetedPlayerName)
 		if not target then
-			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			warn("Geçerli hedef bulunamadı.")
 			return
 		end
 
@@ -306,13 +306,12 @@ Section:AddToggle({
 
 		if not (root and targetRoot) then return end
 
-		if FaceSitActive then
-			-- Oturt
+		if Value then
+			-- Otur
 			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
 				plr.Character.Humanoid.Sit = true
 			end
 
-			-- Yüz tarafına oturma pozisyonu (hedefin önünde, hafif yukarıda)
 			spawn(function()
 				while FaceSitActive and root and targetRoot do
 					pcall(function()
@@ -322,9 +321,11 @@ Section:AddToggle({
 							v.Parent = root
 						end
 
-						-- Hedefin önüne oturt
-						local faceSitCFrame = targetRoot.CFrame * CFrame.new(0, 1.9, 1.1)
-						root.CFrame = faceSitCFrame
+						-- Yüzün önüne konumlandırma:
+						-- Hedefin CFrame'i önüne (LookVector yönünde) 1.1 stud ileri, 1.9 stud yukarı
+						local facePosition = targetRoot.CFrame * CFrame.new(0, 1.9, 1.1)
+
+						root.CFrame = facePosition
 						root.Velocity = Vector3.new(0, 0, 0)
 					end)
 					task.wait()
@@ -332,7 +333,6 @@ Section:AddToggle({
 			end)
 		else
 			-- Sıfırla
-			local root = GetRoot(plr)
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
 			end
@@ -342,4 +342,5 @@ Section:AddToggle({
 		end
 	end
 })
+
 
