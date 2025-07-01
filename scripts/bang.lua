@@ -346,8 +346,9 @@ Section:AddToggle({
 })
 
 
+
 Section:AddToggle({
-    Name = "Face Bang (Standing)",
+    Name = "Standing Bang",
     Default = false,
     Callback = function(Value)
         FaceSitActive = Value
@@ -367,12 +368,14 @@ Section:AddToggle({
             -- Karakterin ayakta durmasını sağla
             if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
                 plr.Character.Humanoid.Sit = false
+                plr.Character.Humanoid.AutoRotate = false -- Otomatik dönüşü kapat
             end
 
             spawn(function()
-                local oscillationSpeed = -1 -- Hareket hızı
-                local oscillationDistance = 1 -- Hareket mesafesi
+                local oscillationSpeed = 0.15 -- Hareket hızı (biraz daha hızlı)
+                local oscillationDistance = 1.2 -- Hareket mesafesi
                 local timeOffset = 0
+                local baseOffset = CFrame.new(0, 0, -1.5) -- Temel pozisyon (arkada)
 
                 while FaceSitActive and root and targetRoot do
                     pcall(function()
@@ -382,28 +385,48 @@ Section:AddToggle({
                             v.Parent = root
                         end
 
-                        -- Hedefin arkasına pozisyon hesapla
-                        local backward = -targetRoot.CFrame.LookVector -- hedefin arkası
+                        -- Hareket hesaplamaları
                         timeOffset = timeOffset + oscillationSpeed
-                        
-                        -- Sinüs fonksiyonu ile ileri-geri hareket
                         local oscillation = math.sin(timeOffset) * oscillationDistance
                         
-                        -- Hedefin arkasında, biraz yukarıda ve ileri-geri hareket eden pozisyon
-                        local pos = targetRoot.Position + Vector3.new(0, 0.5, 0) + backward * (1.5 + oscillation)
+                        -- Hedefin pelvis pozisyonunu al (daha gerçekçi)
+                        local targetPelvis = targetRoot.Position + Vector3.new(0, 0.5, 0)
                         
-                        -- Karakteri hedefe doğru bakacak şekilde konumlandır
-                        root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0,1.5,0))
+                        -- Pozisyon hesapla (tüm vücut hareketi için)
+                        local moveDirection = -targetRoot.CFrame.LookVector -- Arkaya doğru
+                        local pos = targetPelvis + (moveDirection * (1.5 + oscillation)) 
+                        
+                        -- Tüm vücut hareketi için CFrame ayarla
+                        local hipOffset = Vector3.new(0, -0.3, 0) -- Kalça pozisyonu ayarı
+                        local lookAtPos = targetPelvis + hipOffset
+                        
+                        -- Daha stabil bir duruş için CFrame
+                        root.CFrame = CFrame.new(pos, lookAtPos) * CFrame.Angles(math.rad(-5), 0, 0)
                         root.Velocity = Vector3.new(0, 0, 0)
+                        
+                        -- Ekstra stabilite için vücut rotasyonu
+                        if plr.Character and plr.Character:FindFirstChild("UpperTorso") then
+                            plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-10), 0, 0)
+                        end
                     end)
                     task.wait()
                 end
             end)
         else
+            -- Temizlik işlemleri
             if root and root:FindFirstChild("BreakVelocity") then
                 root.BreakVelocity:Destroy()
             end
-            -- Oturma durumunu değiştirmeye gerek yok çünkü zaten ayakta
+            if plr.Character then
+                local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.AutoRotate = true -- Otomatik dönüşü tekrar aç
+                end
+                -- Vücut rotasyonunu sıfırla
+                if plr.Character:FindFirstChild("UpperTorso") then
+                    plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, -0.5, 0)
+                end
+            end
         end
     end
 })
