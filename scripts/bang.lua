@@ -290,7 +290,7 @@ Section:AddToggle({
 
 
 Section:AddToggle({
-	Name = "Face Sit (Ön Tarafa Otur)",
+	Name = "Face Sit (Ön Tarafa Otur v2)",
 	Default = false,
 	Callback = function(Value)
 		FaceSitActive = Value
@@ -307,7 +307,6 @@ Section:AddToggle({
 		if not (root and targetRoot) then return end
 
 		if Value then
-			-- Otur
 			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
 				plr.Character.Humanoid.Sit = true
 			end
@@ -321,18 +320,17 @@ Section:AddToggle({
 							v.Parent = root
 						end
 
-						-- Yüzün önüne konumlandırma:
-						-- Hedefin CFrame'i önüne (LookVector yönünde) 1.1 stud ileri, 1.9 stud yukarı
-						local facePosition = targetRoot.CFrame * CFrame.new(0, 1.9, 1.1)
+						-- Yüzünün önüne pozisyon hesapla:
+						local forward = targetRoot.CFrame.LookVector -- hedefin baktığı yön
+						local pos = targetRoot.Position + Vector3.new(0, 1.9, 0) + forward * 1.1
 
-						root.CFrame = facePosition
+						root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0,1.9,0))
 						root.Velocity = Vector3.new(0, 0, 0)
 					end)
 					task.wait()
 				end
 			end)
 		else
-			-- Sıfırla
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
 			end
