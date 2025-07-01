@@ -451,10 +451,10 @@ Section:AddToggle({
 })
 
 Section:AddToggle({
-    Name = "Realistic R6 Bang",
+    Name = "Standing Face Bang",
     Default = false,
     Callback = function(Value)
-        RealisticBangActive = Value
+        StandingFaceBangActive = Value
 
         local target = GetPlayer(TargetedPlayerName)
         if not target then
@@ -462,87 +462,57 @@ Section:AddToggle({
             return
         end
 
-        -- R6 Moduna Geçiş Fonksiyonu
-        local function ConvertToR6()
-            if plr.Character and not plr.Character:FindFirstChild("R6Converted") then
-                local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid and humanoid.RigType == Enum.HumanoidRigType.R15 then
-                    -- R15'ten R6'ya dönüştürme
-                    humanoid:ChangeRig(Enum.HumanoidRigType.R6)
-                    
-                    -- Dönüştürme işaretini ekle
-                    local marker = Instance.new("BoolValue")
-                    marker.Name = "R6Converted"
-                    marker.Parent = plr.Character
-                    
-                    -- Özel R6 ayarları
-                    humanoid.HipHeight = 1.5 -- Daha yüksek kalça
-                    task.wait(0.5) -- Model yüklenmesi için bekle
-                end
-            end
-        end
-
         local root = GetRoot(plr)
         local targetRoot = GetRoot(target)
         if not (root and targetRoot) then return end
 
         if Value then
-            -- R6 moduna geç
-            ConvertToR6()
-
-            -- Karakter ayarları
-            if plr.Character then
-                local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.Sit = false
-                    humanoid.AutoRotate = false
-                    humanoid.PlatformStand = true
-                end
-                
-                -- R6 için optimize animasyon ayarları
-                if plr.Character:FindFirstChild("Torso") then
-                    plr.Character.Torso.Waist.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-20), 0, 0)
-                end
+            -- Karakter ayakta dursun
+            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+                plr.Character.Humanoid.Sit = false
+                plr.Character.Humanoid.AutoRotate = false
+                plr.Character.Humanoid.PlatformStand = true
             end
 
             spawn(function()
-                local bangSpeed = 0.15 -- R6 için optimize hız
-                local bangDepth = 1  -- R6 için mesafe
-                local upDownMovement = 0.25
+                local bangSpeed = 0.2 -- Hareket hızı
+                local bangDepth = 1.2 -- İleri-geri mesafe
+                local upDownMovement = 0.15 -- Hafif yukarı-aşağı hareket
                 local timePassed = 0
+                local faceHeight = 1.7 -- Yüz yüksekliği
 
-                while RealisticBangActive and root and targetRoot do
+                while StandingFaceBangActive and root and targetRoot do
                     pcall(function()
                         -- Hız kontrolü
-                        if not root:FindFirstChild("BangVelocity") then
+                        if not root:FindFirstChild("FaceBangVelocity") then
                             local v = Instance.new("BodyVelocity")
-                            v.Name = "BangVelocity"
+                            v.Name = "FaceBangVelocity"
                             v.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                            v.P = 15000 -- R6 için daha yüksek P değeri
+                            v.P = 15000
                             v.Velocity = Vector3.new(0, 0, 0)
                             v.Parent = root
                         end
 
-                        -- Hareket hesaplamaları (R6 için optimize edilmiş)
+                        -- Hareket hesaplamaları
                         timePassed = timePassed + bangSpeed
                         local forwardBack = math.sin(timePassed) * bangDepth
-                        local verticalMove = math.cos(timePassed * 2.2) * upDownMovement -- R6 için farklı frekans
+                        local verticalMove = math.cos(timePassed * 2) * upDownMovement
                         
-                        -- R6 pelvis pozisyonu
-                        local targetPos = targetRoot.Position + Vector3.new(0, 1.2 + verticalMove, 0)
-                        local moveDirection = -targetRoot.CFrame.LookVector
-                        local finalPos = targetPos + (moveDirection * (1.3 + forwardBack))
+                        -- Hedefin yüz pozisyonu
+                        local targetFacePos = targetRoot.Position + Vector3.new(0, faceHeight + verticalMove, 0)
+                        local faceDirection = targetRoot.CFrame.LookVector -- Yüzün baktığı yön
                         
-                        -- R6 için özel rotasyon
-                        local upperBodyAngle = math.rad(-20 - (math.sin(timePassed) * 12))
+                        -- Pozisyon ayarı (yüze doğru yaklaşma)
+                        local finalPos = targetFacePos + (faceDirection * (1.3 - forwardBack))
                         
-                        -- Uygula
-                        root.CFrame = CFrame.new(finalPos, targetPos) * CFrame.Angles(math.rad(-7), 0, 0)
+                        -- Duruş ve rotasyon
+                        root.CFrame = CFrame.new(finalPos, targetFacePos) * CFrame.Angles(math.rad(-5), 0, 0)
                         root.Velocity = Vector3.new(0, 0, 0)
                         
-                        -- R6 Torso animasyonu
-                        if plr.Character and plr.Character:FindFirstChild("Torso") then
-                            plr.Character.Torso.Waist.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(upperBodyAngle, 0, 0)
+                        -- Üst gövde animasyonu
+                        if plr.Character and plr.Character:FindFirstChild("UpperTorso") then
+                            local upperBodyAngle = math.rad(-10 - (math.sin(timePassed) * 8))
+                            plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, -0.5, 0) * CFrame.Angles(upperBodyAngle, 0, 0)
                         end
                     end)
                     task.wait()
@@ -550,27 +520,20 @@ Section:AddToggle({
             end)
         else
             -- Temizlik işlemleri
-            if root and root:FindFirstChild("BangVelocity") then
-                root.BangVelocity:Destroy()
+            if root and root:FindFirstChild("FaceBangVelocity") then
+                root.FaceBangVelocity:Destroy()
             end
             
             if plr.Character then
-                -- R6Converted işaretini sil
-                if plr.Character:FindFirstChild("R6Converted") then
-                    plr.Character.R6Converted:Destroy()
-                end
-                
                 local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     humanoid.AutoRotate = true
                     humanoid.PlatformStand = false
-                    -- R15'e geri dön (isteğe bağlı)
-                    -- humanoid:ChangeRig(Enum.HumanoidRigType.R15)
                 end
                 
-                -- R6 Torso pozisyonunu sıfırla
-                if plr.Character:FindFirstChild("Torso") then
-                    plr.Character.Torso.Waist.C0 = CFrame.new(0, 0, 0)
+                -- Vücut pozisyonunu sıfırla
+                if plr.Character:FindFirstChild("UpperTorso") then
+                    plr.Character.UpperTorso.Waist.C0 = CFrame.new(0, -0.5, 0)
                 end
             end
         end
