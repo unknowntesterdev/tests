@@ -232,3 +232,58 @@ Section:AddToggle({
 		end
 	end
 })
+
+Section:AddToggle({
+	Name = "Fly Attach + Animation",
+	Default = false,
+	Callback = function(Value)
+		running = Value
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Lütfen geçerli hedef oyuncu ismi girin.")
+			return
+		end
+
+		local localPlayer = game.Players.LocalPlayer
+		local humanoidRootPart = GetRoot(localPlayer)
+		local targetRootPart = GetRoot(target)
+
+		if not (humanoidRootPart and targetRootPart) then return end
+
+		if running then
+			originalGravity = workspace.Gravity
+			workspace.Gravity = 0
+
+			spawn(function()
+				while running and humanoidRootPart and targetRootPart and humanoidRootPart.Position.Y <= 44 do
+					task.wait()
+					humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, 1.5, 0)
+				end
+
+				task.wait(1)
+
+				-- Attach to target
+				attachmentLoop = game:GetService("RunService").Stepped:Connect(function()
+					humanoidRootPart.CFrame = targetRootPart.CFrame * CFrame.new(0, 2.3, -1.1) * CFrame.Angles(0, math.pi, 0)
+					humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+				end)
+
+				task.wait(1)
+
+				-- Animation
+				local anim = Instance.new("Animation")
+				anim.AnimationId = "rbxassetid://148840371"
+				local hum = localPlayer.Character:FindFirstChild("Humanoid")
+				if hum then
+					animTrack = hum:LoadAnimation(anim)
+					animTrack:Play()
+					animTrack:AdjustSpeed(3)
+				end
+			end)
+		else
+			if originalGravity then workspace.Gravity = originalGravity end
+			if attachmentLoop then attachmentLoop:Disconnect() end
+			if animTrack then animTrack:Stop() end
+		end
+	end
+})
