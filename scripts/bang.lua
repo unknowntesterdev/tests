@@ -307,8 +307,8 @@ Section:AddToggle({
             end
 
             spawn(function()
-                local oscillationSpeed = -1 -- Hareket hızı (daha hızlı için azalt)
-                local oscillationDistance = 0.9 -- Hareket mesafesi
+                local oscillationSpeed = 0.15 -- Hareket hızı (daha hızlı için azalt)
+                local oscillationDistance = 0.5 -- Hareket mesafesi
                 local timeOffset = 0
 
                 while FaceSitActive and root and targetRoot do
@@ -346,10 +346,10 @@ Section:AddToggle({
 })
 
 Section:AddToggle({
-    Name = "Face Sit",
+    Name = "Back Position (Oscillate)",
     Default = false,
     Callback = function(Value)
-        FaceSitActive = Value
+        BackOscillateActive = Value
 
         local target = GetPlayer(TargetedPlayerName)
         if not target then
@@ -363,76 +363,39 @@ Section:AddToggle({
         if not (root and targetRoot) then return end
 
         if Value then
-            -- NoClip için Collision'ı kapat
-            if plr.Character then
-                for _, part in ipairs(plr.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-
-            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-                plr.Character.Humanoid.Sit = true
-            end
-
             spawn(function()
-                local oscillationSpeed = 0.15
-                local oscillationDistance = 0.4
+                local oscillationSpeed = 5 -- Hareket hızı
+                local oscillationDistance = 1.5 -- Hareket mesafesi
                 local timeOffset = 0
+                local baseDistance = 2 -- Hedefle arasındaki temel mesafe
 
-                while FaceSitActive and root and targetRoot and targetRoot.Parent do
+                while BackOscillateActive and root and targetRoot do
                     pcall(function()
-                        -- NoClip için sürekli collision kontrolü
-                        if plr.Character then
-                            for _, part in ipairs(plr.Character:GetDescendants()) do
-                                if part:IsA("BasePart") then
-                                    part.CanCollide = false
-                                end
-                            end
-                        end
-
                         if not root:FindFirstChild("BreakVelocity") then
                             local v = Velocity_Asset:Clone()
                             v.Name = "BreakVelocity"
                             v.Parent = root
                         end
 
-                        -- Güncel target pozisyonu al
-                        local currentTargetRoot = GetRoot(target)
-                        if not currentTargetRoot then break end
-
-                        -- Yüzünün önüne pozisyon hesapla
-                        local forward = currentTargetRoot.CFrame.LookVector
-                        timeOffset = timeOffset + oscillationSpeed
-                        local oscillation = math.sin(timeOffset * 2) * oscillationDistance
+                        -- Hedefin arkasına pozisyon hesapla
+                        local backward = -targetRoot.CFrame.LookVector -- hedefin arkası
+                        timeOffset = timeOffset + oscillationSpeed * task.wait()
                         
-                        local targetFacePos = currentTargetRoot.Position + Vector3.new(0, 1.5, 0)
-                        local desiredPos = targetFacePos + forward * (1.2 + oscillation)
+                        -- Sinüs fonksiyonu ile ileri-geri hareket
+                        local oscillation = math.sin(timeOffset) * oscillationDistance
                         
-                        -- Pozisyon ve bakış açısı güncelleme
-                        root.CFrame = CFrame.new(desiredPos, targetFacePos)
+                        -- Pozisyon hesaplama (hedefin arkasında + yükseklik + salınım)
+                        local pos = targetRoot.Position + Vector3.new(0, 0.5, 0) + backward * (baseDistance + oscillation)
+                        
+                        root.CFrame = CFrame.new(pos, targetRoot.Position + Vector3.new(0,1.5,0))
                         root.Velocity = Vector3.new(0, 0, 0)
-                        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                     end)
                     task.wait()
                 end
             end)
         else
-            -- NoClip'i kapat
-            if plr.Character then
-                for _, part in ipairs(plr.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = true
-                    end
-                end
-            end
-
             if root and root:FindFirstChild("BreakVelocity") then
                 root.BreakVelocity:Destroy()
-            end
-            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-                plr.Character.Humanoid.Sit = false
             end
         end
     end
