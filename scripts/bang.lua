@@ -79,6 +79,19 @@ local function StopAnim()
 	end
 end
 
+local function ToggleNoclip(enabled)
+	for _, player in pairs(Players:GetPlayers()) do
+		local character = player.Character
+		if character then
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = not enabled
+				end
+			end
+		end
+	end
+end
+
 -- UI
 Section:AddTextbox({
 	Name = "Player Name",
@@ -342,56 +355,65 @@ Section:AddToggle({
 })
 
 Section:AddToggle({
-	Name = "Face Sit Bang (İleri Geri)",
+	Name = "Face Sit Bang (İleri Geri + Noclip)",
 	Default = false,
 	Callback = function(Value)
-		local FaceSitBangActive = Value
-
+		FaceSitBangActive = Value
 		local target = GetPlayer(TargetedPlayerName)
 		if not target then
 			warn("Geçerli hedef bulunamadı.")
 			return
 		end
-
-		local root = GetRoot(plr)
-		local targetRoot = GetRoot(target)
-
+		local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+		local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
 		if not (root and targetRoot) then return end
 
 		if FaceSitBangActive then
+			-- Noclip aç
+			ToggleNoclip(true)
+
 			-- Otur
 			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
 				plr.Character.Humanoid.Sit = true
 			end
 
-			local TweenService = game:GetService("TweenService")
+			-- BreakVelocity ekle
+			if not root:FindFirstChild("BreakVelocity") then
+				local v = Velocity_Asset:Clone()
+				v.Name = "BreakVelocity"
+				v.Parent = root
+			end
+
 			local basePos = targetRoot.Position + Vector3.new(0, 1.9, 0)
 			local forwardVector = targetRoot.CFrame.LookVector
-			local forwardOffset = forwardVector * 1.1 -- 1.1 stud ileri
+			local forwardOffset = forwardVector * 1.1
 
 			spawn(function()
-				while FaceSitBangActive and root and targetRoot do
-					-- ileri
-					local forwardPos = basePos + forwardOffset
-					local tweenForward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-						CFrame = CFrame.new(forwardPos, basePos)
+				while FaceSitBangActive and root.Parent and targetRoot.Parent do
+					local tweenInfo = TweenInfo.new(tweenDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+					TweenForward = TweenService:Create(root, tweenInfo, {
+						CFrame = CFrame.new(basePos + forwardOffset, basePos)
 					})
-					tweenForward:Play()
-					tweenForward.Completed:Wait()
+					TweenForward:Play()
+					TweenForward.Completed:Wait()
 
-					-- geri
-					local tweenBackward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					TweenBackward = TweenService:Create(root, tweenInfo, {
 						CFrame = CFrame.new(basePos, basePos + forwardOffset)
 					})
-					tweenBackward:Play()
-					tweenBackward.Completed:Wait()
+					TweenBackward:Play()
+					TweenBackward.Completed:Wait()
 				end
 			end)
 		else
-			-- Durdur
+			-- Noclip kapat
+			ToggleNoclip(false)
+
+			-- BreakVelocity kaldır
 			if root and root:FindFirstChild("BreakVelocity") then
 				root.BreakVelocity:Destroy()
 			end
+
+			-- Oturmayı bırak
 			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
 				plr.Character.Humanoid.Sit = false
 			end
