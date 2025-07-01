@@ -346,7 +346,7 @@ Section:AddToggle({
 })
 
 Section:AddToggle({
-    Name = "Face Sit v3",
+    Name = "Face Sit",
     Default = false,
     Callback = function(Value)
         FaceSitActive = Value
@@ -377,12 +377,11 @@ Section:AddToggle({
             end
 
             spawn(function()
-                local oscillationSpeed = 0.15 -- Daha hızlı hareket
-                local oscillationDistance = 0.4 -- Daha geniş hareket
+                local oscillationSpeed = 0.15
+                local oscillationDistance = 0.4
                 local timeOffset = 0
-                local lastPosition = root.Position
 
-                while FaceSitActive and root and targetRoot do
+                while FaceSitActive and root and targetRoot and targetRoot.Parent do
                     pcall(function()
                         -- NoClip için sürekli collision kontrolü
                         if plr.Character then
@@ -399,26 +398,22 @@ Section:AddToggle({
                             v.Parent = root
                         end
 
-                        -- Yüzünün önüne pozisyon hesapla:
-                        local forward = targetRoot.CFrame.lookVector
+                        -- Güncel target pozisyonu al
+                        local currentTargetRoot = GetRoot(target)
+                        if not currentTargetRoot then break end
+
+                        -- Yüzünün önüne pozisyon hesapla
+                        local forward = currentTargetRoot.CFrame.LookVector
                         timeOffset = timeOffset + oscillationSpeed
-                        
-                        -- Daha pürüzsüz hareket için sinüs fonksiyonu
                         local oscillation = math.sin(timeOffset * 2) * oscillationDistance
                         
-                        -- Hedef hareket ederse daha iyi takip için smooth position
-                        local targetPos = targetRoot.Position + Vector3.new(0, 1.9, 0)
-                        local desiredPos = targetPos + forward * (1.2 + oscillation)
+                        local targetFacePos = currentTargetRoot.Position + Vector3.new(0, 1.5, 0)
+                        local desiredPos = targetFacePos + forward * (1.2 + oscillation)
                         
-                        -- Anlık teleport yerine smooth hareket
-                        root.CFrame = CFrame.new(desiredPos, targetPos)
+                        -- Pozisyon ve bakış açısı güncelleme
+                        root.CFrame = CFrame.new(desiredPos, targetFacePos)
                         root.Velocity = Vector3.new(0, 0, 0)
-                        
-                        -- NoClip için pozisyon koruma
-                        if (root.Position - lastPosition).Magnitude > 5 then
-                            root.CFrame = CFrame.new(lastPosition)
-                        end
-                        lastPosition = root.Position
+                        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                     end)
                     task.wait()
                 end
