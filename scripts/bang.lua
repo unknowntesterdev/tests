@@ -341,4 +341,61 @@ Section:AddToggle({
 	end
 })
 
+Section:AddToggle({
+	Name = "Face Sit Bang (İleri Geri)",
+	Default = false,
+	Callback = function(Value)
+		local FaceSitBangActive = Value
+
+		local target = GetPlayer(TargetedPlayerName)
+		if not target then
+			warn("Geçerli hedef bulunamadı.")
+			return
+		end
+
+		local root = GetRoot(plr)
+		local targetRoot = GetRoot(target)
+
+		if not (root and targetRoot) then return end
+
+		if FaceSitBangActive then
+			-- Otur
+			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+				plr.Character.Humanoid.Sit = true
+			end
+
+			local TweenService = game:GetService("TweenService")
+			local basePos = targetRoot.Position + Vector3.new(0, 1.9, 0)
+			local forwardVector = targetRoot.CFrame.LookVector
+			local forwardOffset = forwardVector * 1.1 -- 1.1 stud ileri
+
+			spawn(function()
+				while FaceSitBangActive and root and targetRoot do
+					-- ileri
+					local forwardPos = basePos + forwardOffset
+					local tweenForward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+						CFrame = CFrame.new(forwardPos, basePos)
+					})
+					tweenForward:Play()
+					tweenForward.Completed:Wait()
+
+					-- geri
+					local tweenBackward = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+						CFrame = CFrame.new(basePos, basePos + forwardOffset)
+					})
+					tweenBackward:Play()
+					tweenBackward.Completed:Wait()
+				end
+			end)
+		else
+			-- Durdur
+			if root and root:FindFirstChild("BreakVelocity") then
+				root.BreakVelocity:Destroy()
+			end
+			if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+				plr.Character.Humanoid.Sit = false
+			end
+		end
+	end
+})
 
